@@ -1,7 +1,9 @@
 Rapid
 =====
 
-Collection of scripts for Sublime Text 3 to be used in [Almost Human Ltd.](http://www.grimrock.net) rapid development environment. 
+Collection of scripts for Sublime Text 3 to be used in [Ctrl Alt Ninja Ltd.](http://druidstone-game.com) rapid development environment.
+
+Originally by Almost Human Ltd. This fork adds some very specific customizations.
 
 Installation
 ------------
