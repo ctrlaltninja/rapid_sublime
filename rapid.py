@@ -87,11 +87,17 @@ class RapidConnectionThread(threading.Thread):
 
 		RapidOutputView.printMessage(msg)
 
-	def sendString(self, msg):
+	def _sendString(self, msg):
 		#ignore non-ascii characters when sending
 		#msg = msg.encode('ascii', 'ignore')
-		
+		#print("Sending:")
+		#print(msg)
 		self.sock.send(msg.encode())
+
+	@staticmethod
+	def sendString(msg):
+		RapidConnectionThread.checkConnection()
+		RapidConnectionThread.instance._sendString(msg + '\000')
 
 	@staticmethod
 	def checkConnection():
@@ -105,8 +111,7 @@ class RapidConnectionThread(threading.Thread):
 
 class RapidResumeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		RapidConnectionThread.checkConnection()
-		RapidConnectionThread.instance.sendString("\nsys.resume()\000")
+		RapidConnectionThread.sendString("\nsys.resume()")
 
 class RapidHelpCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -114,9 +119,8 @@ class RapidHelpCommand(sublime_plugin.TextCommand):
 		region = self.view.word(cursor_pos)
 		word = self.view.substr(region)
 		#print("Sending word: " + word)
-		RapidConnectionThread.checkConnection()
-		line = "\nrequire(\"doc\"); doc.find([["+ word +"]])\000"
-		RapidConnectionThread.instance.sendString(line)
+		line = "\nrequire(\"doc\"); doc.find([["+ word +"]])"
+		RapidConnectionThread.sendString(line)
 
 class RapidEvalCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -126,9 +130,8 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			print("cannot evaluate python files")
 			return
 
-		RapidConnectionThread.checkConnection()
 		line_contents = self.getLines()
-		RapidConnectionThread.instance.sendString(line_contents)
+		RapidConnectionThread.sendString(line_contents)
 
 	# Checks if the cursor is inside lua function() block
 	def checkBlock(self, view, current_row, line_contents, cursor_pos):
@@ -265,7 +268,7 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			file_name = file_name.replace("\\", "/")
 
 			line_str = self.view.substr(line)
-			line_contents = "@" + file_name + ":" + file_row_str + "\n" + line_str + "\000"
+			line_contents = "@" + file_name + ":" + file_row_str + "\n" + line_str
 			
 			#print("------")
 			#print("Sending: ", file_name)
@@ -296,22 +299,21 @@ class RapidCheckServerAndStartupProjectCommand(sublime_plugin.WindowCommand):
 			is_modified = True
 
 		#Send commands to server accordingly
-		RapidConnectionThread.checkConnection()
 		if startup_exists:
 			#always load project, even if it is open and modified (modifications are loaded only after saving)
 			RapidOutputView.printMessage("Startup project: " + startup_path)
-			line = "\nsys.loadProject([[" + startup_path + "]])\000"
-			RapidConnectionThread.instance.sendString(line)
+			line = "\nsys.loadProject([[" + startup_path + "]])"
+			RapidConnectionThread.sendString(line)
 		else:
 			#if no startup project, run current page
 			if is_modified:
 				#file has not been saved - restart runtime engine and send code over
-				RapidConnectionThread.instance.sendString("\nsys.restart()\000")
-				line = "@" + self.view.file_name() + ":1\n" + self.view.substr(sublime.Region(0, self.view.size())) + "\000"
-				RapidConnectionThread.instance.sendString(line)
+				RapidConnectionThread.sendString("\nsys.restart()")
+				line = "@" + self.view.file_name() + ":1\n" + self.view.substr(sublime.Region(0, self.view.size()))
+				RapidConnectionThread.sendString(line)
 			else:
 				#file is up to date -> reload file - this is faster than sending the code
-				RapidConnectionThread.instance.sendString("\nsys.loadProject([[" + self.view.file_name() + "]])\000")
+				RapidConnectionThread.sendString("\nsys.loadProject([[" + self.view.file_name() + "]])")
 
 class RapidConnect():
 	def __init__(self):
@@ -383,3 +385,90 @@ class RapidTestCommand(sublime_plugin.TextCommand):
 			print("rapid is already running!")
 		else:
 			print("rapid is not running!")
+
+# TODO figure out how to move this to a separate file
+class RapidRestartGameFromRoomCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+
+		filename = get_filename(self.view)
+
+		if filename == None:
+			RapidOutputView.printMessage("The file has not been saved -> could not determine world.")
+			return
+
+		# TODO evaluate only lua files
+		for region in self.view.sel():
+			room_name = self.find_room_name(region)
+			world_name, level_name = parse_room_filename(filename)
+
+			if world_name != None and room_name != None:
+				cmd = '@:1\nrestart_game("{0}","{1}","{2}");shb_bring_to_front(g.window);'
+				RapidConnectionThread.sendString(cmd.format(world_name, level_name, room_name))
+			else: 
+				if world_name == None:
+					RapidOutputView.printMessage("The path does not follow convention /worlds/world/level.lua -> could not determine world.")
+				elif level_name == None:
+					RapidOutputView.printMessage("No name=\"...\" found from selection -> could not determine room name.")
+
+	def find_room_name(self, region):
+		if region.empty():
+			return self.find_room_name_from_cursor(region.begin())
+		else:
+			return self.find_room_name_from_selection(region)
+
+	def find_room_name_from_selection(self, region):
+		# a block selection: find the name inside the selection.
+		lines = self.view.substr(region)
+		m = re.search(r"""name\s*=\s*["'](\w+)["']""", lines)
+
+		if m != None: return m.group(1)
+
+	def find_room_name_from_cursor(self, point):
+		# take current row
+		row,_ = self.view.rowcol(point)
+
+		# advance backwards until def_room is found
+		while row >= 0:
+			reg_line = self.view.full_line(self.view.text_point(row, 0))
+			line = self.view.substr(reg_line)
+			m = re.search(r"def_room[{\n\s]", line)
+			if m != None: break
+
+			# proceed to previous line
+			row = row - 1
+
+		# bail out if the def_room was not found
+		if row < 0: return None
+
+		# find a region where the name must be found by advancing forward and counting braces until a balance is achieved
+		start_point = self.view.text_point(row, 0)
+		current_point = start_point
+
+		left = 0
+		right = 0
+
+		while current_point < self.view.size():
+			# HACK: Of course, this does get fooled by e.g. braces in comments and strings. It is not a parser.
+			current = self.view.substr(current_point)
+			if current == '{': left += 1
+			if current == '}': right += 1
+			if left > 0 and left == right: break
+
+			current_point = current_point + 1
+
+		# find name pattern from the region defined by def_room and ending brace
+		lines = self.view.substr(sublime.Region(start_point, current_point))
+		m = re.search(r"""name\s*=\s*["'](\w+)["']""", lines)
+
+		if m != None: return m.group(1)
+
+def parse_room_filename(filename):
+	m = re.search("[/\\\\]([^/^\\\\]+)[/\\\\]([^/^\\\\]+).lua", filename)
+
+	if m:
+		return m.group(1), m.group(2)
+	else:
+		return None, None
+
+# this is a wrapper for extract and override:
+def get_filename(view): return view.file_name()

@@ -15,8 +15,7 @@ from .rapid import *
 
 class RapidDebugStepCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		RapidConnectionThread.checkConnection()
-		RapidConnectionThread.instance.sendString("\nDebug.step()\000")
+		RapidConnectionThread.sendString("\nDebug.step()")
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):

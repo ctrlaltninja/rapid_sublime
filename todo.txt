@@ -19,7 +19,7 @@ TODO
 ----
 
 - Debugger
-
+- Add instructions how to set up unit testing
 
 
 Done in 0.1.6

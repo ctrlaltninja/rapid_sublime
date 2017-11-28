@@ -19,9 +19,8 @@ class RapidLuaCheckCommand(sublime_plugin.TextCommand):
 				with tempfile.NamedTemporaryFile() as temp:
 					RapidLuaCheckCommand.tempFileName = temp.name
 					tfile = temp.name.replace("\\", "/")
-					RapidConnectionThread.checkConnection()
-					line_contents = "@rapid_luacheck.py:1\n require(\"luacheck\")(\""+ current_filename +"\",\"" + tfile + "\")\000"
-					RapidConnectionThread.instance.sendString(line_contents)
+					line_contents = "@rapid_luacheck.py:1\n require(\"luacheck\")(\""+ current_filename +"\",\"" + tfile + "\")"
+					RapidConnectionThread.sendString(line_contents)
 			else:
 				RapidOutputView.printMessage("Static analysis is only possible for lua files!")
 
@@ -52,9 +51,8 @@ class RapidLuaCheckAllCommand(sublime_plugin.TextCommand):
 			with tempfile.NamedTemporaryFile() as temp:
 				RapidLuaCheckCommand.tempFileName = temp.name				
 				tfile = temp.name.replace("\\", "/")
-				RapidConnectionThread.checkConnection()
-				line_contents = "@rapid_luacheck.py:1\n require(\"luacheck\")("+ files +",\"" + tfile + "\")\000"
-				RapidConnectionThread.instance.sendString(line_contents)
+				line_contents = "@rapid_luacheck.py:1\n require(\"luacheck\")("+ files +",\"" + tfile + "\")"
+				RapidConnectionThread.sendString(line_contents)
 				RapidOutputView.printMessage("Performing static analysis for all lua files in project...")
 
 class RapidLuacheckLoadStaticAnalysisCommand(sublime_plugin.TextCommand):
