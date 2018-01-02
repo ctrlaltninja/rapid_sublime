@@ -9,7 +9,8 @@
             { "key": "setting.is_widget", "operator": "equal", "operand": false }
         ],
     },
-    { "keys": ["f1"], "command": "rapid_find" },
+    { "keys": ["f1"], "command": "rapid_find_short" },
+    { "keys": ["f2"], "command": "rapid_find_full" },
     { "keys": ["ctrl+shift+f1"], "command": "rapid_help" },
     { "keys": ["ctrl+r"], "command": "rapid_resume", "context":
         [

@@ -19,15 +19,16 @@ class TestRapidCollector_FullProject(TestCase):
             lambda f: f.getFunction(),
             RapidFunctionStorage.getFindFunctions()))
 
+        # HACK this might not be deterministic, the order may change?
         expected = [
-            '/// foo1(x)',
-            '/// baz,boz = foobar(x, y)',
-            '/// Foo.bar(x, y)',
-            '/// baz,boz = Foo.bar(x, y)',
             'function foo1(param1, param2, ...)',
             'function bar1(param1, param2)',
             'function tbl:foo()',
             'function tbl.bar()',
+            '/// foo1(x)',
+            '/// baz,boz = foobar(x, y)',
+            '/// Foo.bar(x, y)',
+            '/// baz,boz = Foo.bar(x, y)',
             'function baz1(param1, param2, ...)',
             'function baz2(param1, param2)']
 
