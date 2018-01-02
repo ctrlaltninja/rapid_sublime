@@ -209,17 +209,17 @@ class RapidCollectorThread(threading.Thread):
 	def stop(self):
 		self.is_running = False
 
-class RapidCollector(sublime_plugin.EventListener):
+class RapidCollectorListener(sublime_plugin.EventListener):
 	applyAutoComplete = False
 	parseAutoComplete = False
 
 	def on_post_save(self, view):
-		if RapidCollector.parseAutoComplete:
+		if RapidCollectorListener.parseAutoComplete:
 			RapidCollectorThread.instance.parseAutoCompleteData(view)
 
 	def on_query_completions(self, view, prefix, locations):
-		if RapidCollector.applyAutoComplete:
-			RapidCollector.applyAutoComplete = False
+		if RapidCollectorListener.applyAutoComplete:
+			RapidCollectorListener.applyAutoComplete = False
 			syntax = view.settings().get('syntax')
 			if syntax != None and 'Lua' in syntax:
 				return RapidFunctionStorage.getAutoCompleteList(prefix)
@@ -228,7 +228,7 @@ class RapidCollector(sublime_plugin.EventListener):
 	
 class RapidAutoCompleteCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
-		RapidCollector.applyAutoComplete = True
+		RapidCollectorListener.applyAutoComplete = True
 		self.view.run_command('auto_complete')
 
 class RapidStartCollectorCommand(sublime_plugin.TextCommand):
@@ -238,7 +238,7 @@ class RapidStartCollectorCommand(sublime_plugin.TextCommand):
 
 		settings = RapidSettings().getSettings()		
 		if "ParseAutoCompleteOnSave" in settings:
-			RapidCollector.parseAutoComplete = settings["ParseAutoCompleteOnSave"]
+			RapidCollectorListener.parseAutoComplete = settings["ParseAutoCompleteOnSave"]
 		
 		folders = sublime.active_window().folders()
 		if RapidCollectorThread.instance != None:
