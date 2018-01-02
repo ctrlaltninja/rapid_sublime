@@ -23,35 +23,25 @@ from .rapid_functionstorage import RapidFunctionStorage
 from .rapid_functionstorage import Method
 from .rapid_functionstorage import FunctionDefinition
 
-class RapidCollectorThread(threading.Thread):
-	instance = None
-
+class RapidCollector():
+	# TODO refactor these to parameters injected through the constructor
 	def getExcludedFolders(self):
-		settings = RapidSettings().getSettings()	
-		sublime_project_path = RapidSettings().getStartupProjectPath()	
+		settings = RapidSettings().getSettings()
+		sublime_project_path = RapidSettings().getStartupProjectPath()
 		if "ExcludeFoldersInFind" in settings:
 			self.exclude_folders = settings["ExcludeFoldersInFind"]
 		if "ExcludedFolders" in settings:
 			self.excluded_folders = settings["ExcludedFolders"]
-			
-	def __init__(self, folders, timeout):
-		threading.Thread.__init__(self)
-		self.folders = folders
-		self.timeout = timeout
 
+	def __init__(self, folders):
+		self.folders = folders
+	
 		self.luaFuncPattern = re.compile('\s*function\s*')
 		self.cppFuncPattern = re.compile("///\s")
 
 		self.exclude_folders = False
 		self.excluded_folders = []
 		self.getExcludedFolders()
-
-		self.save_method_signatures()
-		#self.parse_now = False
-		self.file_for_parsing = ""
-		self.is_running = True
-
-		RapidCollectorThread.instance = self
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
@@ -186,6 +176,22 @@ class RapidCollectorThread(threading.Thread):
 					full_path = os.path.abspath(os.path.join(root, name))
 					cppFileList.append(full_path)
 
+class RapidCollectorThread(threading.Thread):
+	instance = None
+			
+	def __init__(self, folders, timeout):
+		threading.Thread.__init__(self)
+		self.timeout = timeout
+
+		self.collector = RapidCollector(folders)
+		self.collector.save_method_signatures()
+
+		#self.parse_now = False
+		self.file_for_parsing = ""
+		self.is_running = True
+
+		RapidCollectorThread.instance = self
+
 	#def run(self):
 		# #TODO: change this to use callback instead of polling
 		# while self.is_running:
@@ -196,7 +202,7 @@ class RapidCollectorThread(threading.Thread):
 
 	def callback(self):
 		#print("Rapid MethodComplete: saving method signature")
-		self.save_method_signature(self.file_for_parsing)
+		self.collector.save_method_signature(self.file_for_parsing)
 
 	def parseAutoCompleteData(self, view):
 		self.file_for_parsing = view.file_name()
