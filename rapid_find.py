@@ -10,30 +10,10 @@ from .rapid_parse import RapidSettings
 from .rapid_functionstorage import RapidFunctionStorage
 
 class RapidFindCommand(sublime_plugin.TextCommand):
-	folders_fetched = False
-	exclude_folders = False
-	excluded_folders = []
 	functionFound = False
-
-	def getExcludedFolders(self):
-		if not self.folders_fetched:
-			settings = RapidSettings().getSettings()
-			sublime_project_path = RapidSettings().getStartupProjectPath()
-			if "ExcludeFoldersInFind" in settings:
-				#true/false if folders are excluded
-				self.exclude_folders = settings["ExcludeFoldersInFind"]
-			if "ExcludedFolders" in settings:
-				#list of excluded folders
-				excluded = settings["ExcludedFolders"]
-				for excluded_folder in excluded:
-					self.excluded_folders.append(os.path.abspath(os.path.join(sublime_project_path, excluded_folder)))
-			# for excluded_folder in self.excluded_folders:
-			# 	print("Excluded folder change check: " + excluded_folder)
-			self.folders_fetched = True
 
 	def run(self, edit):
 		self.functionFound = False
-		self.getExcludedFolders()
 		cursor_pos = self.view.sel()[0].begin()
 		
 		region = self.view.word(cursor_pos)
