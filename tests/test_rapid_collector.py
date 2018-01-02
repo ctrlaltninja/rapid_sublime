@@ -2,21 +2,39 @@ import os
 import re
 from unittest import TestCase
 from rapid_sublime.rapid_methodcomplete import RapidCollector
+from rapid_sublime.rapid_functionstorage import RapidFunctionStorage
 
 class TestRapidCollector_FullProject(TestCase):
     def setUp(self):
         self.project = os.path.join(os.path.dirname(__file__), "project")
+        RapidFunctionStorage.clear()
 
-    def test_save_method_signatures(self):
-        target = RapidCollector("project", [])
+    def test_save_method_signatures_creates_functions_for_find(self):
+        target = RapidCollector([self.project], [])
 
         target.save_method_signatures()
 
-        # TODO
-        self.assertEqual(True, True)
+        # TODO this does not check the descriptions correctly
+        results = list(map(
+            lambda f: f.getFunction(),
+            RapidFunctionStorage.getFindFunctions()))
+
+        expected = [
+            '/// foo1(x)',
+            '/// baz,boz = foobar(x, y)',
+            '/// Foo.bar(x, y)',
+            '/// baz,boz = Foo.bar(x, y)',
+            'function foo1(param1, param2, ...)',
+            'function bar1(param1, param2)',
+            'function tbl:foo()',
+            'function tbl.bar()',
+            'function baz1(param1, param2, ...)',
+            'function baz2(param1, param2)']
+
+        self.assertEqual(expected, results)
 
     def test_get_files_in_project(self):
-        target = RapidCollector("project", [])
+        target = RapidCollector([self.project], [])
 
         luaFiles = []
         cppFiles = []

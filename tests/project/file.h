@@ -1,4 +1,1 @@
-class Foo {
-public:
-	void foo(int bar);
-}
+/// this_should_not_be_matched()

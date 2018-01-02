@@ -52,6 +52,16 @@ class RapidFunctionStorage():
 	#static analyzation (ctrl+f10)
 	luaFiles = []
 
+	# TODO remove static methods, use dependency injection where needed
+	# Create a service locator (just globals) for sublime commands that need these
+
+	@staticmethod
+	def clear():
+		funcs = {}
+		findFuncMap = {}
+		findFuncs = []
+		luaFiles = []		
+
 	@staticmethod
 	def addAutoCompleteFunctions(functions, filename):
 		RapidFunctionStorage.funcs[filename] = functions

@@ -37,7 +37,7 @@ class RapidCollector():
 		for folder in self.folders:
 			luafiles = []
 			cppfiles = []
-			fileLists = self.get_files_in_project(folder, luafiles, cppfiles)
+			self.get_files_in_project(folder, luafiles, cppfiles)
 
 			methodPattern = re.compile('function\s\w+[:\.](\w+)\((.*)\)')
 			funcPattern = re.compile('function\s*(\w+)\s*\((.*)\)')
@@ -58,7 +58,7 @@ class RapidCollector():
 							findFunctions.append(FunctionDefinition(matches.group(0)))
 				RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 				RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
-			
+		
 			for file_name in cppfiles:
 				functions = []
 				findFunctions = []
