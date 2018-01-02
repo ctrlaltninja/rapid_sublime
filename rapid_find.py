@@ -9,7 +9,7 @@ from .rapid_output import RapidOutputView
 from .rapid_parse import RapidSettings
 from .rapid_functionstorage import RapidFunctionStorage
 
-class RapidFind2Command(sublime_plugin.TextCommand):
+class RapidFindCommand(sublime_plugin.TextCommand):
 	folders_fetched = False
 	exclude_folders = False
 	excluded_folders = []
@@ -83,6 +83,7 @@ class RapidFind2Command(sublime_plugin.TextCommand):
 
 		functions = RapidFunctionStorage.getFindFunctions()
 		if len(functions) == 0:
+			# TODO just trigger the recollection from here...
 			print("Error: Function definitions have been lost, alt+l collects them again")
 		else:
 			for func in functions:
@@ -111,6 +112,7 @@ class RapidFind2Command(sublime_plugin.TextCommand):
 
 		functions = RapidFunctionStorage.getFindFunctions()
 		if len(functions) == 0:
+			# TODO just trigger the recollection from here...
 			print("Error: Function definitions have been lost, alt+l collects them again")
 		else:
 			for func in functions:
