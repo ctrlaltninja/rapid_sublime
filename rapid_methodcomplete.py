@@ -245,4 +245,4 @@ class RapidStartCollectorCommand(sublime_plugin.TextCommand):
 		RapidCollectorThread.instance = RapidCollectorThread(folders, 30)
 
 		RapidCollectorThread.instance.start()
-		print("Took " + str(time.time() - startTime) + " seconds.")
+		RapidOutputView.printMessage("Collected function signatures in %.2f seconds." % (time.time() - startTime))
