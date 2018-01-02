@@ -221,8 +221,7 @@ class RapidCollectorListener(sublime_plugin.EventListener):
 			syntax = view.settings().get('syntax')
 			if syntax != None and 'Lua' in syntax:
 				return RapidFunctionStorage.getAutoCompleteList(prefix)
-		completions = []
-		return (completions, sublime.INHIBIT_EXPLICIT_COMPLETIONS)
+		return None
 	
 class RapidAutoCompleteCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

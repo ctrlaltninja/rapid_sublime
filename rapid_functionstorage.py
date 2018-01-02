@@ -79,7 +79,7 @@ class RapidFunctionStorage():
 			for method_obj in functions:
 				if word.lower() in method_obj.name().lower():
 					
-					#parse method variables
+					# parse method variables so that they can be tabbed through
 					variables = method_obj.signature().split(", ")
 					signature = ""
 					index = 1
@@ -91,9 +91,9 @@ class RapidFunctionStorage():
 
 					method_str_to_show = method_obj.name() + '(' + method_obj.signature() +')'
 					method_str_to_append = method_obj.name() + '(' + signature + ')'
-					method_file_location = method_obj.filename();
+					method_file_location = method_obj.filename()
 
-					autocomplete_list.append((method_str_to_show + '\t' + method_file_location, method_str_to_append)) 
+					autocomplete_list.append((method_str_to_show + '\t' + method_file_location, method_str_to_append))
 		return autocomplete_list	
 
 	@staticmethod
