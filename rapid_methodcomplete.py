@@ -24,24 +24,13 @@ from .rapid_functionstorage import Method
 from .rapid_functionstorage import FunctionDefinition
 
 class RapidCollector():
-	# TODO refactor these to parameters injected through the constructor
-	def getExcludedFolders(self):
-		settings = RapidSettings().getSettings()
-		sublime_project_path = RapidSettings().getStartupProjectPath()
-		if "ExcludeFoldersInFind" in settings:
-			self.exclude_folders = settings["ExcludeFoldersInFind"]
-		if "ExcludedFolders" in settings:
-			self.excluded_folders = settings["ExcludedFolders"]
-
-	def __init__(self, folders):
+	def __init__(self, folders, excluded_folders):
 		self.folders = folders
 	
 		self.luaFuncPattern = re.compile('\s*function\s*')
 		self.cppFuncPattern = re.compile("///\s")
 
-		self.exclude_folders = False
-		self.excluded_folders = []
-		self.getExcludedFolders()
+		self.excluded_folders = excluded_folders
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
@@ -159,13 +148,11 @@ class RapidCollector():
 		for root, dirs, files in os.walk(folder, True):
 
 			# prune excluded folders from search
-			if self.exclude_folders:
-				if self.excluded_folders:
-					for excluded_folder in self.excluded_folders:
-						if excluded_folder in dirs:
-							#print("Pruning excluded folder " + excluded_folder)
-							dirs.remove(excluded_folder)
-						
+			for excluded_folder in self.excluded_folders:
+				if excluded_folder in dirs:
+					#print("Pruning excluded folder " + excluded_folder)
+					dirs.remove(excluded_folder)
+
 			for name in files:
 				if name.endswith(".lua"):
 					full_path = os.path.abspath(os.path.join(root, name))
@@ -178,12 +165,17 @@ class RapidCollector():
 
 class RapidCollectorThread(threading.Thread):
 	instance = None
-			
+		
 	def __init__(self, folders, timeout):
 		threading.Thread.__init__(self)
 		self.timeout = timeout
 
-		self.collector = RapidCollector(folders)
+		excluded_folders = []
+		settings = RapidSettings().getSettings()
+		if "ExcludedFolders" in settings:
+			excluded_folders = settings["ExcludedFolders"]
+
+		self.collector = RapidCollector(folders, excluded_folders)
 		self.collector.save_method_signatures()
 
 		#self.parse_now = False
