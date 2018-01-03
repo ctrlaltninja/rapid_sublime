@@ -15,12 +15,11 @@ class TestRapidCollector_FullProject(TestCase):
         target.save_method_signatures()
 
         # TODO this does not check the descriptions correctly
-        results = list(map(
+        results = sorted(list(map(
             lambda f: f.getFunction(),
-            RapidFunctionStorage.getFindFunctions()))
+            RapidFunctionStorage.getFindFunctions())))
 
-        # HACK this might not be deterministic, the order may change?
-        expected = [
+        expected = sorted([
             'function foo1(param1, param2, ...)',
             'function bar1(param1, param2)',
             'function tbl:foo()',
@@ -30,7 +29,7 @@ class TestRapidCollector_FullProject(TestCase):
             '/// Foo.bar(x, y)',
             '/// baz,boz = Foo.bar(x, y)',
             'function baz1(param1, param2, ...)',
-            'function baz2(param1, param2)']
+            'function baz2(param1, param2)'])
 
         self.assertEqual(expected, results)
 
