@@ -82,48 +82,49 @@ class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 # 		if view.name() == RapidOutputView.name:
 # 			sublime.active_window().set_layout( {"cols": [0.0, 1.0], "rows": [0.0, 1.0], "cells": [[0,0,1,1]] } )
 
+def parse_file_location(line):
+	file_name_and_row = None
+
+	groups = re.findall(r"([-/\w\d:]+\.lua:\d+)", line)
+	if len(groups) > 0:
+		file_name_and_row = groups[-1]
+
+	# try to find hlsl file
+	if file_name_and_row == None:
+		found_text = re.search(r'[^ ]+hlsl[^ ]+', line)
+		if found_text != None:
+			file_name_and_row = found_text.group(0)
+
+	if file_name_and_row:
+
+		# TODO tidy up hlsl pattern so that this is not required (lua version doesn't need this)
+		if file_name_and_row.endswith(":"):
+			file_name_and_row = file_name_and_row[:-1]
+
+		#split on the last occurence of ':'
+		test = file_name_and_row.rsplit(':', 1)
+		file_name = test[0].strip()
+		file_row = int(test[1])
+
+		return (file_name, file_row)
+	else:
+		return None
+
 class RapidDoubleClick(sublime_plugin.WindowCommand):
 	def run(self):
 		view = sublime.active_window().active_view()
 		if view.name() == RapidOutputView.name or view.name() == RapidOutputView.analyze_view_name or \
 						  (view.file_name() != None and view.file_name().endswith(RapidOutputView.analyze_file_name)):
-			sel = view.sel()
-			r = sel[0]
-			s = view.line(r)
-			line = view.substr(s).replace('\\', '/')
 
-			# TODO extract parsing to a separate, unit testable function
-			file_name_and_row = None
-			# this pattern matches these:
-			# main.lua:198: missions.lua:3: data/missions/mission_base.lua:1: unexpected symbol near '='
-			# main.lua:198: in function 'init'
-			# C:/jp/shinobi/lua/fwk.lua:42: in function 'start_app'
-			groups = re.findall(r"([-/\w\d:]+\.lua:\d+)", line)
-			if len(groups) > 0:
-				file_name_and_row = groups[-1]
+			# If there are multiple selected areas, just pick the first:
+			line = view.substr(view.line(view.sel()[0]))
+			line = line.replace('\\', '/')
 
-			# try to find hlsl file
-			if file_name_and_row == None:
-				found_text = re.search(r'[^ ]+hlsl[^ ]+', line)
-				if found_text != None:
-					file_name_and_row = found_text.group(0)
+			file_name, file_row = parse_file_location(line)
 
-			if file_name_and_row:
-				
-				# TODO tidy up hlsl pattern so that this is not required (lua version doesn't need this)
-				if file_name_and_row.endswith(":"):
-					file_name_and_row = file_name_and_row[:-1]
-				
+			if file_name:
 				view.run_command("expand_selection", {"to": "line"})
 
-				#split on the last occurence of ':' 
-				test = file_name_and_row.rsplit(':', 1)
-				file_name = test[0].strip()
-				file_row = test[1]
-
-				#RapidOutputView.printMessage("file_name: " + file_name)
-				#RapidOutputView.printMessage("file_row: " + file_row)
-	
 				window_found = self.window
 				path = None
 		
@@ -153,11 +154,10 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 				if path != None:
 					view = window_found.find_open_file(path)
 					if view != None:
-						window_found.open_file(path+":"+file_row, sublime.ENCODED_POSITION)
 						window_found.focus_view(view)
 					else:
 						window_found.focus_group(0)
-						view = window_found.open_file(path+":"+file_row, sublime.ENCODED_POSITION)
+					view = window_found.open_file(path + ":" + str(file_row), sublime.ENCODED_POSITION)
 				else:
 					RapidOutputView.printMessage(file_name + " not found in the project folders!")
 
