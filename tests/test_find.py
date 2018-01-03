@@ -40,11 +40,15 @@ class TestFind(TestCase):
     def test_case_difference(self):
         results = sorted(list(map(lambda r: r[0], find("Foo"))))
 
-        expected = sorted([])
-        self.assertEqual(expected, results)
+        self.assertEqual([], results)
 
     def test_descriptions_are_not_matched(self):
         results = sorted(list(map(lambda r: r[0], find("blabla"))))
 
-        expected = sorted([])
-        self.assertEqual(expected, results)
+        self.assertEqual([], results)
+
+    def test_callsite_returns_exact_matches(self):
+        results = sorted(list(map(lambda r: r[0], find("baz", True))))
+
+        expected = sorted(['function baz()'])
+        self.assertEqual(expected, results)        

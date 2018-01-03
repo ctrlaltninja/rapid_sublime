@@ -28,6 +28,7 @@ class TestRapidCollector_FullProject(TestCase):
             '/// baz,boz = foobar(x, y)',
             '/// Foo.bar(x, y)',
             '/// baz,boz = Foo.bar(x, y)',
+            'function baz()',
             'function baz1(param1, param2, ...)',
             'function baz2(param1, param2)'])
 

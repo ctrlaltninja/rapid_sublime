@@ -1,3 +1,6 @@
+function baz()
+end
+
 function baz1(param1, param2, ...)
 end
 

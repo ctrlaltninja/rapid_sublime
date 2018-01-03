@@ -10,12 +10,16 @@ from .rapid_parse import RapidSettings
 from .rapid_functionstorage import RapidFunctionStorage
 
 # Find word(s) from function definitions
-def find(pattern):	
+def find(pattern, callsite=False):	
 	if pattern.startswith("*"):
 		pattern = pattern[1:]
 
-	pattern = '.*' + pattern + '.*[\({].*[\)}]'
-	#print("find word(s), pattern: " + pattern)
+	final_pattern = None
+
+	if callsite:
+		final_pattern = '\s%s[\({].*[\)}]' % pattern
+	else:
+		final_pattern = '.*%s.*[\({].*[\)}]' % pattern
 
 	functions = RapidFunctionStorage.getFindFunctions()
 	if len(functions) == 0:
@@ -25,14 +29,14 @@ def find(pattern):
 	else:
 		for func in functions:
 			funcName = func.getFunction()
-			match = re.search(pattern, funcName.lower())
+			match = re.search(final_pattern, funcName.lower())
 			if match != None:
 				# TODO strip already when scanning
 				funcName = funcName.replace("///", "").strip()
 				yield (funcName, func.getDescription())
 
 # Find class(es) from function definitions
-def findClass(pattern):
+def findClass(pattern, callsite=False):
 	if pattern.startswith("*"):
 		pattern = pattern[1:]
 
@@ -52,6 +56,7 @@ def findClass(pattern):
 			funcName = func.getFunction()
 			# TODO strip already when scanning
 			funcName = funcName.replace("///", "").strip()
+			# TODO is forcing it to lower a bug or not? It does not match e.g. pattern Foo.bar or Foo:bar
 			match = re.search(search_pattern, funcName.lower())
 			if match != None:
 				funcName = funcName.strip()
@@ -69,9 +74,11 @@ def find_impl(command, edit, full):
 		RapidOutputView.printMessage("Find: empty search patterns are no good.")
 		return
 
-	region2 = command.view.line(cursor_pos)
-	line = command.view.substr(region2)
-	words = line.split()
+	# Figure out if this a call site or not
+	word_end_pos = max(region.a, region.b)
+	callsite = "(" == command.view.substr(sublime.Region(word_end_pos, word_end_pos + 1))
+
+	words = command.view.substr(command.view.line(cursor_pos)).split()
 	
 	#RapidOutputView.printMessage("Words are: " + str(words))
 
@@ -93,7 +100,7 @@ def find_impl(command, edit, full):
 	found = False
 	find_fun = findClass if find_class_methods else find
 
-	for match in find_fun(pattern2):
+	for match in find_fun(pattern2, callsite):
 		found = True
 
 		# signature

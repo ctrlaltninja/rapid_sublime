@@ -24,3 +24,14 @@ class TestFindClass(TestCase):
 
         expected = sorted(['Foo.bar(x, y)', 'baz,boz = Foo.bar(x, y)', 'function tbl.bar()'])
         self.assertEqual(expected, results)
+
+    def test_callsite_partial_pattern_not_found(self):
+        results = sorted(list(map(lambda r: r[0], findClass("tbl.ba", True))))
+
+        self.assertEqual([], results)
+
+    def test_callsite_exact_pattern_found(self):
+        results = sorted(list(map(lambda r: r[0], findClass("tbl.bar", True))))
+
+        expected = sorted(['function tbl.bar()'])
+        self.assertEqual(expected, results)
