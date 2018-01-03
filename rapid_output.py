@@ -2,9 +2,36 @@ import sublime, sublime_plugin
 import re
 import os
 import sublime_api
+from rapid_sublime.rapid import open_file_location
+
+def parse_file_location(line):
+	file_name_and_row = None
+
+	groups = re.findall(r"([-/\w\d:]+\.lua:\d+)", line)
+	if len(groups) > 0:
+		file_name_and_row = groups[-1]
+
+	# try to find hlsl file
+	if file_name_and_row == None:
+		found_text = re.search(r'[^ ]+hlsl[^ ]+', line)
+		if found_text != None:
+			file_name_and_row = found_text.group(0)
+
+	if file_name_and_row:
+		# TODO tidy up hlsl pattern so that this is not required (lua version doesn't need this)
+		if file_name_and_row.endswith(":"):
+			file_name_and_row = file_name_and_row[:-1]
+
+		#split on the last occurence of ':'
+		test = file_name_and_row.rsplit(':', 1)
+		file_name = test[0].strip()
+		file_row = int(test[1])
+
+		return (file_name, file_row)
+	else:
+		return None
 
 class RapidOutputView():
-	
 	name = "Rapid Output"
 	analyze_view_name = "Analyze Result"
 	analyze_file_name = "analyze_result.lua"
@@ -82,34 +109,6 @@ class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 # 		if view.name() == RapidOutputView.name:
 # 			sublime.active_window().set_layout( {"cols": [0.0, 1.0], "rows": [0.0, 1.0], "cells": [[0,0,1,1]] } )
 
-def parse_file_location(line):
-	file_name_and_row = None
-
-	groups = re.findall(r"([-/\w\d:]+\.lua:\d+)", line)
-	if len(groups) > 0:
-		file_name_and_row = groups[-1]
-
-	# try to find hlsl file
-	if file_name_and_row == None:
-		found_text = re.search(r'[^ ]+hlsl[^ ]+', line)
-		if found_text != None:
-			file_name_and_row = found_text.group(0)
-
-	if file_name_and_row:
-
-		# TODO tidy up hlsl pattern so that this is not required (lua version doesn't need this)
-		if file_name_and_row.endswith(":"):
-			file_name_and_row = file_name_and_row[:-1]
-
-		#split on the last occurence of ':'
-		test = file_name_and_row.rsplit(':', 1)
-		file_name = test[0].strip()
-		file_row = int(test[1])
-
-		return (file_name, file_row)
-	else:
-		return None
-
 class RapidDoubleClick(sublime_plugin.WindowCommand):
 	def run(self):
 		view = sublime.active_window().active_view()
@@ -120,46 +119,11 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 			line = view.substr(view.line(view.sel()[0]))
 			line = line.replace('\\', '/')
 
+			view.run_command("expand_selection", {"to": "line"})
+
 			file_name, file_row = parse_file_location(line)
-
 			if file_name:
-				view.run_command("expand_selection", {"to": "line"})
-
-				window_found = self.window
-				path = None
-		
-				# scan all opened folders of *all* windows
-				# we need scan other windows, because the rapid output view
-				# can be detached from the window, where the project is loaded
-				for window in sublime.windows():
-					for folder in window.folders():
-						candidate = os.path.join(folder, file_name)
-						if os.path.isfile(candidate):
-							window_found = window
-							path = candidate
-							break
-
-				if path == None:
-					# exact match was not found. Try recursing the subdirectories of folders opened in Sublime
-					for window in sublime.windows():
-						for folder in window.folders():
-							for root, subfolders, files in os.walk(folder):
-								for subfolder in subfolders:
-									candidate = os.path.join(root, subfolder, file_name)
-									if os.path.isfile(candidate):
-										window_found = window
-										path = candidate
-										break
-
-				if path != None:
-					view = window_found.find_open_file(path)
-					if view != None:
-						window_found.focus_view(view)
-					else:
-						window_found.focus_group(0)
-					view = window_found.open_file(path + ":" + str(file_row), sublime.ENCODED_POSITION)
-				else:
-					RapidOutputView.printMessage(file_name + " not found in the project folders!")
+				open_file_location(file_name, file_row)
 
 class RapidCloseOutputViewCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

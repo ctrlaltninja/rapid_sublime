@@ -16,6 +16,7 @@ TODO
 ----
 
 - Debugger
+- change full help keyboard shortcut from F2 to CTRL+F1 - it overrides bookmarks
 - investigate using regions on RapidOutputView to colorize helps and make them easier to read
 - Refactoring ideas:
 	- strip /// and whitespace already when scanning files from RapidCollector
@@ -24,3 +25,6 @@ TODO
 	- rename save_method_signature - it is actually actually saving many signatures for a single file
 	- rename RapidOutputView.printMessage to just print
 	- get rid of repeating "Rapid" on classnames. It bears no information.
+	- rename rapid_parse.py to rapid_settings.py
+	- get rid of RapidJumpTo command? It is not used?
+	- remove HLSL support, we are not using it anyway and it does not probably work
