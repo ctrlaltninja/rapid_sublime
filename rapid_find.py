@@ -14,7 +14,7 @@ def find(pattern):
 	if pattern.startswith("*"):
 		pattern = pattern[1:]
 
-	pattern = '.*'+pattern+'.*[\({].*[\)}]'
+	pattern = '.*' + pattern + '.*[\({].*[\)}]'
 	#print("find word(s), pattern: " + pattern)
 
 	functions = RapidFunctionStorage.getFindFunctions()
@@ -29,9 +29,6 @@ def find(pattern):
 			if match != None:
 				# TODO strip already when scanning
 				funcName = funcName.replace("///", "").strip()
-				#RapidOutputView.printMessage(funcName)
-				#if func.getDescription() != None:
-				#	RapidOutputView.printMessage(func.getDescription())
 				yield (funcName, func.getDescription())
 
 # Find class(es) from function definitions
@@ -53,6 +50,8 @@ def findClass(pattern):
 	else:
 		for func in functions:
 			funcName = func.getFunction()
+			# TODO strip already when scanning
+			funcName = funcName.replace("///", "").strip()
 			match = re.search(search_pattern, funcName.lower())
 			if match != None:
 				funcName = funcName.strip()
