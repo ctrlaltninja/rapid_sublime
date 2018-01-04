@@ -1,14 +1,15 @@
 import os
 import sublime, sublime_plugin
-from .rapid_utils import open_file_location
-from .rapid_utils import escape_filename
 from .rapid import RapidConnectionThread
+from .rapid_output import RapidOutputView
+from .rapid_utils import escape_filename
 
 REGION_KEY = "breakpoint"
 
 class RapidDebugRunCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		RapidConnectionThread.sendString("\nDebug.run()")
+		RapidOutputView.printMessage("Running...")
 
 class RapidDebugStepCommand(sublime_plugin.WindowCommand):
 	def run(self):
@@ -56,16 +57,58 @@ class RapidDebugRemoveAllBreakpoints(sublime_plugin.TextCommand):
 		RapidConnectionThread.sendString("\nDebug.removeAllBreakpoints()")
 		self.view.erase_regions(REGION_KEY)
 
-def parseDebugMessage(cmd):
-	matches = re.match('#ATLINE (.*):(.*)', cmd)
-	if matches:
-		filename = matches.group(1)
-		line = matches.group(2)
+class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
+	def __init__(self, window):
+		super().__init__(window)
+		self.active = False
+		self.cmds = {
+			'cb': self.remove_all_breakpoints,
+			'g': self.go,
+			'p': self.ping,
+			'idle': self.idle,
+		}
 
-		open_file_location(filename, line)
+	def run(self):
+		# Signal the server side that we want to start debugging
+		RapidConnectionThread.sendString("\nDebug.start()")
+		self.show_panel()
+		self.active = True
 
-		# show current line in gutter
-		view = sublime.active_window().active_view()
-		region = [s for s in view.sel()]
-		icon = "Packages/rapid_sublime/icons/current_line.png"
-		view.add_regions("current", region, "mark", icon, sublime.HIDDEN)
+	def show_panel(self):
+		self.view = self.window.show_input_panel(
+			"Debug", "",
+			lambda t: self.committed(t),
+			None, #lambda t: self.changed(t),
+			self.canceled)
+
+	def committed(self, text):
+		# Parse the command
+		text = text.strip() or "idle"
+		cmd = self.cmds[text]
+
+		if cmd:
+			cmd()
+		else:
+			# TODO
+			pass
+
+		# reshow the input panel unless explicitly closed
+		if self.active:
+			self.show_panel()
+
+	def canceled(self):
+		self.active = False
+
+	def go(self):
+		print("running")
+		self.window.run_command("rapid_debug_run")
+
+	def idle(self):
+		RapidOutputView.printMessage("---")
+
+	def ping(self):
+		RapidOutputView.printMessage("Ping!")
+		RapidConnectionThread.sendString("\nprint('Pong!')")
+
+	def remove_all_breakpoints(self):
+		self.window.run_command("rapid_debug_remove_all_breakpoints")

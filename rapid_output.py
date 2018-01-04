@@ -123,7 +123,11 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 
 			file_name, file_row = parse_file_location(line)
 			if file_name:
-				open_file_location(file_name, file_row)
+				success, err = open_file_location(file_name, file_row)
+				if not success:
+					RapidOutputView.printMessage(err)
+			else:
+				RapidOutputView.printMessage("Could not parse file name from selection.")
 
 class RapidCloseOutputViewCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

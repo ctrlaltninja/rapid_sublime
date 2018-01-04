@@ -1,6 +1,6 @@
 import os
+import re
 import sublime
-from .rapid_output import RapidOutputView
 
 def open_file_location(file_name, row):
 	window_found = sublime.active_window()
@@ -36,9 +36,28 @@ def open_file_location(file_name, row):
 		else:
 			window_found.focus_group(0)
 		view = window_found.open_file(path + ":" + str(row), sublime.ENCODED_POSITION)
+		return (True, None)
 	else:
-		RapidOutputView.printMessage(file_name + " not found in the project folders!")
+		return (False, "%(file)s not found in project folders." % { 'file': file_name })
 
 
 def escape_filename(filename):
 	return filename.replace("\\", "/").replace('"', r'\"')
+
+
+def parseDebugMessage(cmd):
+	matches = re.match('#ATLINE (.*):(.*)', cmd)
+	if matches:
+		filename = matches.group(1)
+		line = matches.group(2)
+
+		success, err = open_file_location(filename, line)
+
+		if success:
+			# show current line in gutter
+			view = sublime.active_window().active_view()
+			region = [s for s in view.sel()]
+			icon = "Packages/rapid_sublime/icons/current_line.png"
+			view.add_regions("current", region, "mark", icon, sublime.HIDDEN)
+
+		return success, err
