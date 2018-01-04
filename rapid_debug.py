@@ -1,3 +1,4 @@
+import os
 import sublime, sublime_plugin
 from .rapid_utils import open_file_location
 from .rapid_utils import escape_filename
@@ -5,8 +6,12 @@ from .rapid import RapidConnectionThread
 
 REGION_KEY = "breakpoint"
 
-class RapidDebugStepCommand(sublime_plugin.TextCommand):
-	def run(self, edit):
+class RapidDebugRunCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		RapidConnectionThread.sendString("\nDebug.run()")
+
+class RapidDebugStepCommand(sublime_plugin.WindowCommand):
+	def run(self):
 		RapidConnectionThread.sendString("\nDebug.step()")
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
@@ -24,17 +29,17 @@ class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 
 		self.view.add_regions(REGION_KEY, regions, "mark", "dot", sublime.HIDDEN | sublime.PERSISTENT)
 
-		filename = self.view.file_name()
+		filename = os.path.basename(self.view.file_name())
 
 		# call add breakpoint for all valid breakpoints
 		for point in new_points:
 			row,_ = self.view.rowcol(point)
-			self.setBreakpoint(filename, row)
+			self.setBreakpoint(filename, row + 1)
 
 		# call remove breakpoint for all old breakpoints
 		for point in removed_points:
 			row,_ = self.view.rowcol(point)
-			self.removeBreakpoint(filename, row)
+			self.removeBreakpoint(filename, row + 1)
 
 	def setBreakpoint(self, filename, row):
 		filename = escape_filename(filename)

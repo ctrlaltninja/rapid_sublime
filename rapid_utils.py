@@ -1,3 +1,7 @@
+import os
+import sublime
+from .rapid_output import RapidOutputView
+
 def open_file_location(file_name, row):
 	window_found = sublime.active_window()
 	path = None
@@ -37,5 +41,4 @@ def open_file_location(file_name, row):
 
 
 def escape_filename(filename):
-
 	return filename.replace("\\", "/").replace('"', r'\"')

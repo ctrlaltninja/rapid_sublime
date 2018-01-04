@@ -38,10 +38,10 @@ class RapidConnectionThread(threading.Thread):
 		self.running = True
 		dataQueue = []
 
+		# HACK the except block is too greedy and captures programming errors hidden in e.g. self.receiveString.
+		# the try should wrap only reading from the socket.
 		try:
-			while True:
-				#data = self.sock.recv(1).decode()
-				
+			while True:		
 				data = self.sock.recv(1)
 				data = self.decodeData(data)
 
@@ -59,7 +59,7 @@ class RapidConnectionThread(threading.Thread):
 		except socket.error:
 			RapidOutputView.printMessage("Socket error")
 		except:
-			RapidOutputView.printMessage("Error")
+			RapidOutputView.printMessage("Error while reading from socket. This is probably a bug in Rapid.")
 
 		self.sock.close()
 		self.running = False
