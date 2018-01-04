@@ -11,10 +11,10 @@ class RapidDebugStepCommand(sublime_plugin.TextCommand):
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):
-		# BUG the breakpoint location is dependent on the column -> fudge selections to start from the
-		# beginning of the line for toggled points
+		# fudge selections to contain full lines so that column location does not matter
+		toggled_points = [self.view.line(r.begin()).begin() for r in self.view.sel()]
+
 		previous_points = [r.begin() for r in self.view.get_regions(REGION_KEY)]
-		toggled_points = [r.begin() for r in self.view.sel()]
 
 		new_points = [p for p in toggled_points if not p in previous_points]
 		removed_points = [p for p in toggled_points if p in previous_points]
