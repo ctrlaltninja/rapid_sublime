@@ -34,3 +34,8 @@ def open_file_location(file_name, row):
 		view = window_found.open_file(path + ":" + str(row), sublime.ENCODED_POSITION)
 	else:
 		RapidOutputView.printMessage(file_name + " not found in the project folders!")
+
+
+def escape_filename(filename):
+
+	return filename.replace("\\", "/").replace('"', r'\"')

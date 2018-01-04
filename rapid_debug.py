@@ -4,6 +4,8 @@ import re
 
 from .rapid_output import RapidOutputView
 from .rapid_utils import open_file_location
+from .rapid_utils import escape_filename
+from .rapid import RapidConnectionThread
 
 # to run execute from the console:
 # view.run_command('rapid_eval')
@@ -14,9 +16,20 @@ class RapidDebugStepCommand(sublime_plugin.TextCommand):
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):
-		region = [s for s in self.view.sel()]
-		# TODO: remove breakpoint
-		self.view.add_regions("breakpoint", region, "mark", "dot", sublime.HIDDEN | sublime.PERSISTENT)
+		# TODO: remove breakpoints
+		regions = [s for s in self.view.sel()]
+		filename = self.view.file_name()
+
+		for region in regions:
+			row,_ = self.view.rowcol(region.begin())
+			self.setBreakpoint(filename, row)
+
+		self.view.add_regions("breakpoint", regions, "mark", "dot", sublime.HIDDEN | sublime.PERSISTENT)
+
+	def setBreakpoint(self, filename, row):
+		filename = escape_filename(filename)
+		message = "\nDebug.addBreakpoint(\"%(file)s\", %(row)d)" % { 'file': filename, 'row': row }
+		RapidConnectionThread.sendString(message)
 
 class RapidDebugRemoveAllBreakpoints(sublime_plugin.TextCommand):
 	def run(self, edit):
