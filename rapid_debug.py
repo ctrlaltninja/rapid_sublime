@@ -3,7 +3,7 @@ import time
 import re
 
 from .rapid_output import RapidOutputView
-from .rapid import open_file_location
+from .rapid_utils import open_file_location
 
 # to run execute from the console:
 # view.run_command('rapid_eval')

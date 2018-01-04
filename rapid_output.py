@@ -2,7 +2,7 @@ import sublime, sublime_plugin
 import re
 import os
 import sublime_api
-from rapid_sublime.rapid import open_file_location
+from .rapid_utils import open_file_location
 
 def parse_file_location(line):
 	file_name_and_row = None
