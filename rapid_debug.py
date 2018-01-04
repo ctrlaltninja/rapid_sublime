@@ -36,19 +36,3 @@ def parseDebugMessage(cmd):
 		icon = "Packages/rapid_sublime/icons/current_line.png"
 		view.add_regions("current", region, "mark", icon, sublime.HIDDEN)
 	return
-
-class RapidJumpTo(sublime_plugin.WindowCommand):
-	def run(self):
-		RapidOutputView.printMessage("RapidJumpTo called!")
-		print("RapidJumpTo called!")
-		path = "c:\\work\\projects\\grimrock2\\Grimrock.lua"
-		line = 3
-		view = self.window.find_open_file(path)
-		if view:
-			self.window.open_file(path + ":" + str(line), sublime.ENCODED_POSITION)
-			#self.window.focus_view(view)
-		else:
-			print("file not open -> opening")
-			view = self.window.open_file(path + ":" + str(line), sublime.ENCODED_POSITION)
-			#if view:
-		 	#	self.window.focus_view(view)
