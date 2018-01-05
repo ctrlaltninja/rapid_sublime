@@ -52,11 +52,14 @@ def escape_filename(filename):
 	return filename.replace("\\", "/").replace('"', r'\"')
 
 
-def clear_current_row_icons():
-	# clear the markers from all open files
+def clear_region_from_all_views(region_key):
 	for window in sublime.windows():
 		for view in window.views():
-			view.erase_regions(CURRENT_REGION_KEY)
+			view.erase_regions(region_key)
+
+
+def clear_current_row_icons():
+	clear_region_from_all_views(CURRENT_REGION_KEY)
 
 
 def focus_current_row(filename, row):

@@ -1,3 +1,8 @@
 [
-    { "caption": "Rapid: Start Debug Session", "command": "rapid_debug_start_session" },
+    { "caption": "Rapid: Debug - Start Session", "command": "rapid_debug_start_session" },
+    { "caption": "Rapid: Debug - Continue", "command": "rapid_debug_run" },
+    { "caption": "Rapid: Debug - Step Into", "command": "rapid_debug_step" },
+    { "caption": "Rapid: Debug - Stop Session", "command": "rapid_debug_stop_session" },
+    { "caption": "Rapid: Debug - Clear All Breakpoints", "command": "rapid_debug_remove_all_breakpoints" },
+    { "caption": "Rapid: Debug - Toggle Breakpoint", "command": "rapid_debug_toggle_breakpoint" },
 ]

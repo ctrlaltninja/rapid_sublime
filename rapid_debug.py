@@ -4,18 +4,25 @@ from .rapid import RapidConnectionThread
 from .rapid_output import RapidOutputView
 from .rapid_utils import escape_filename
 from .rapid_utils import clear_current_row_icons
+from .rapid_utils import clear_region_from_all_views
 
 REGION_KEY = "breakpoint"
 
+def send_cmd(cmd):
+	RapidConnectionThread.sendString("\n" + cmd)
+
+def out(msg):
+	RapidOutputView.printMessage("Debug: " + msg)
+
 class RapidDebugRunCommand(sublime_plugin.WindowCommand):
 	def run(self):
-		RapidConnectionThread.sendString("\nDebug.run()")
-		RapidOutputView.printMessage("Running...")
+		send_cmd("Debug.run()")
+		out("Running...")
 		clear_current_row_icons()
 
 class RapidDebugStepCommand(sublime_plugin.WindowCommand):
 	def run(self):
-		RapidConnectionThread.sendString("\nDebug.step()")
+		send_cmd("Debug.step()")
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -46,18 +53,19 @@ class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 
 	def setBreakpoint(self, filename, row):
 		filename = escape_filename(filename)
-		message = "\nDebug.addBreakpoint(\"%(file)s\", %(row)d)" % { 'file': filename, 'row': row }
-		RapidConnectionThread.sendString(message)
+		message = "Debug.addBreakpoint(\"%(file)s\", %(row)d)" % { 'file': filename, 'row': row }
+		send_cmd(message)
 
 	def removeBreakpoint(self, filename, row):
 		filename = escape_filename(filename)
-		message = "\nDebug.removeBreakpoint(\"%(file)s\", %(row)d)" % { 'file': filename, 'row': row }
-		RapidConnectionThread.sendString(message)
+		message = "Debug.removeBreakpoint(\"%(file)s\", %(row)d)" % { 'file': filename, 'row': row }
+		send_cmd(message)
 
 class RapidDebugRemoveAllBreakpoints(sublime_plugin.TextCommand):
 	def run(self, edit):
-		RapidConnectionThread.sendString("\nDebug.removeAllBreakpoints()")
-		self.view.erase_regions(REGION_KEY)
+		send_cmd("Debug.removeAllBreakpoints()")
+
+		clear_region_from_all_views(REGION_KEY)
 
 class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def __init__(self, window):
@@ -68,13 +76,15 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 			'g': self.go,
 			'p': self.ping,
 			'idle': self.idle,
+			'q': self.stop,
 		}
 
 	def run(self):
 		# Signal the server side that we want to start debugging
-		RapidConnectionThread.sendString("\nDebug.start()")
+		send_cmd("Debug.start()")
 		self.show_panel()
 		self.active = True
+		out("Started.")
 
 	def show_panel(self):
 		self.view = self.window.show_input_panel(
@@ -102,15 +112,24 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 		self.active = False
 
 	def go(self):
-		print("running")
 		self.window.run_command("rapid_debug_run")
 
 	def idle(self):
-		RapidOutputView.printMessage("---")
+		out("---")
 
 	def ping(self):
-		RapidOutputView.printMessage("Ping!")
-		RapidConnectionThread.sendString("\nprint('Pong!')")
+		out("Ping!")
+		send_cmd("print('Pong!')")
 
 	def remove_all_breakpoints(self):
 		self.window.run_command("rapid_debug_remove_all_breakpoints")
+
+	def stop(self):
+		self.window.run_command("rapid_debug_stop_session")
+		self.active = False
+		out("Stopped.")
+
+
+class RapidDebugStopSessionCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		send_cmd("Debug.stop()")
