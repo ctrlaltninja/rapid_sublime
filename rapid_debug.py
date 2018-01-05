@@ -26,6 +26,13 @@ class RapidDebugStepCommand(sublime_plugin.WindowCommand):
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):
+
+		filename = self.view.file_name()
+
+		if not filename:
+			out("Please save the file first - a file name is needed for the breakpoint to be effective.")
+			return
+
 		# fudge selections to contain full lines so that column location does not matter
 		toggled_points = [self.view.line(r.begin()).begin() for r in self.view.sel()]
 
@@ -39,7 +46,7 @@ class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 
 		self.view.add_regions(REGION_KEY, regions, "mark", "dot", sublime.HIDDEN | sublime.PERSISTENT)
 
-		filename = os.path.basename(self.view.file_name())
+		filename = os.path.basename(filename)
 
 		# call add breakpoint for all valid breakpoints
 		for point in new_points:
