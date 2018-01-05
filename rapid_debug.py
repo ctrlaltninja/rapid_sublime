@@ -1,4 +1,5 @@
 import os
+import re
 import sublime, sublime_plugin
 from .rapid import RapidConnectionThread
 from .rapid_output import RapidOutputView
@@ -75,17 +76,51 @@ class RapidDebugRemoveAllBreakpoints(sublime_plugin.TextCommand):
 
 		clear_region_from_all_views(REGION_KEY)
 
+def enum(*sequential, **named):
+    enums = dict(zip(sequential, range(len(sequential))), **named)
+    return type('Enum', (), enums)
+
+Command = enum(
+	'UNKNOWN',
+	'DUMP',
+	'IDLE',
+	'PING',
+	'REMOVE_ALL_BREAKPOINTS',
+	'RUN',
+	'STOP'
+)
+
+command_map = {
+	'cb': Command.REMOVE_ALL_BREAKPOINTS,
+	'd': Command.DUMP,
+	'g': Command.RUN,
+	'idle': Command.IDLE,
+	'p': Command.PING,
+	'q': Command.STOP,
+}
+
+def parse_debug_command(text):
+	matches = re.match('^(\w+)\s*(?:\s(\S+)|$)', text)
+
+	if matches:
+		result = command_map.get(matches.group(1)) or Command.UNKNOWN
+		return (result, [matches.group(2)] if matches.group(2) else None)
+	else:
+		return (Command.UNKNOWN, None)
+
 class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def __init__(self, window):
 		super().__init__(window)
 		self.active = False
-		self.cmds = {
-			'cb': self.remove_all_breakpoints,
-			'g': self.go,
-			'p': self.ping,
-			'idle': self.idle,
-			'q': self.stop,
-			'd': self.dump,
+		# TODO use metaprogramming to generate this on the fly
+		self.method_map = {
+			Command.REMOVE_ALL_BREAKPOINTS	: self.remove_all_breakpoints,
+			Command.RUN						: self.go,
+			Command.PING					: self.ping,
+			Command.IDLE					: self.idle,
+			Command.STOP					: self.stop,
+			Command.DUMP					: self.dump,
+			Command.UNKNOWN					: self.unknown,
 		}
 
 	def run(self):
@@ -105,13 +140,12 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def committed(self, text):
 		# Parse the command
 		text = text.strip() or "idle"
-		cmd = self.cmds[text]
+		command, params = parse_debug_command(text)
 
-		if cmd:
-			cmd()
+		if params:
+			method = self.method_map[command](params)
 		else:
-			# TODO
-			pass
+			method = self.method_map[command]()
 
 		# reshow the input panel unless explicitly closed
 		if self.active:
@@ -120,10 +154,8 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def canceled(self):
 		self.active = False
 
-	def dump(self):
-		# TODO parse variable name from input
-		# self.window.run_command("rapid_debug_dump_variable", { 'variables': ["config"] })
-		self.window.run_command("rapid_debug_dump_variable", { 'variables': [] })
+	def dump(self, variables):
+		self.window.run_command("rapid_debug_dump_variable", { 'variables': variables })
 
 	def go(self):
 		self.window.run_command("rapid_debug_run")
@@ -142,6 +174,9 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 		self.window.run_command("rapid_debug_stop_session")
 		self.active = False
 		out("Stopped.")
+
+	def unknown(self):
+		out("Unknown command; use h for help.")
 
 
 class RapidDebugStopSessionCommand(sublime_plugin.WindowCommand):
