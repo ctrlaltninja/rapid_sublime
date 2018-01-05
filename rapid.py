@@ -34,48 +34,55 @@ class RapidConnectionThread(threading.Thread):
 		except OSError as e:
 			RapidOutputView.printMessage("Failed to connect to rapid server:\n" + str(e) + "\n")
 
+
 	def run(self):
 		self.running = True
+
+		try:
+			self.readFromSocket()
+		finally:
+			self.sock.close()
+			self.running = False
+			del self.sock
+			RapidOutputView.printMessage("Connection terminated")
+
+
+	def readFromSocket(self):
 		dataQueue = []
 
-		# HACK the except block is too greedy and captures programming errors hidden in e.g. self.receiveString.
-		# the try should wrap only reading from the socket.
-		try:
-			while True:		
+		while True:
+			try:
 				data = self.sock.recv(1)
-				data = self.decodeData(data)
+			except socket.error:
+				RapidOutputView.printMessage("Socket error")
+				break
 
-				if not data:
-					break;
+			data = self.decodeData(data)
 
-				if data != '\000':
-					dataQueue.append(data)
+			if not data:
+				break
 
-				if data == '\n' or data == '\000':
-					if dataQueue: #dataQueue is not empty
-						datastr = "".join(dataQueue)
-						self.receiveString(datastr)
-					del dataQueue[:]
-		except socket.error:
-			RapidOutputView.printMessage("Socket error")
-		except:
-			RapidOutputView.printMessage("Error while reading from socket. This is probably a bug in Rapid.")
+			if data != '\000':
+				dataQueue.append(data)
 
-		self.sock.close()
-		self.running = False
-		del self.sock
-		RapidOutputView.printMessage("Connection terminated")
+			if data == '\n' or data == '\000':
+				if dataQueue: #dataQueue is not empty
+					datastr = "".join(dataQueue)
+					self.receiveString(datastr)
+				del dataQueue[:]
+
 
 	def decodeData(self, data):
 		#avoid error if received data is non-ascii (print space instead)
 		try:
-			char = data.decode()
+			return data.decode()
 		except UnicodeDecodeError:
-			char = " "
-		return char
+			return " "
+
 
 	def isRunning(self):
 		return self.running
+
 
 	def receiveString(self, msg):
 		# called when a string is received from the app
@@ -90,6 +97,7 @@ class RapidConnectionThread(threading.Thread):
 
 		RapidOutputView.printMessage(msg)
 
+
 	def _sendString(self, msg):
 		#ignore non-ascii characters when sending
 		#msg = msg.encode('ascii', 'ignore')
@@ -97,10 +105,12 @@ class RapidConnectionThread(threading.Thread):
 		#print(msg)
 		self.sock.send(msg.encode())
 
+
 	@staticmethod
 	def sendString(msg):
 		RapidConnectionThread.checkConnection()
 		RapidConnectionThread.instance._sendString(msg + '\000')
+
 
 	@staticmethod
 	def checkConnection():
@@ -135,6 +145,7 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 
 		line_contents = self.getLines()
 		RapidConnectionThread.sendString(line_contents)
+
 
 	# Checks if the cursor is inside lua function() block
 	def checkBlock(self, view, current_row, line_contents, cursor_pos):
@@ -190,6 +201,7 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 				return False
 		else:
 			return False
+
 
 	def getLines(self):
 		for region in self.view.sel():
@@ -280,6 +292,7 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			#print("------")
 			return line_contents
 
+
 class RapidCheckServerAndStartupProjectCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		self.view = self.window.active_view()
@@ -317,6 +330,7 @@ class RapidCheckServerAndStartupProjectCommand(sublime_plugin.WindowCommand):
 			else:
 				#file is up to date -> reload file - this is faster than sending the code
 				RapidConnectionThread.sendString("\nsys.loadProject([[" + self.view.file_name() + "]])")
+
 
 class RapidConnect():
 	def __init__(self):
@@ -374,6 +388,7 @@ class RapidConnect():
 			RapidOutputView.printMessage("Could not start server executable!")
 			RapidOutputView.printMessage("\"RapidPath<OS>\" and/or \"RapidExe\" variables not found from \"Preferences.sublime_settings\" file!")
 
+
 class RapidTestCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		data = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE).stdout.readlines() 
@@ -388,6 +403,7 @@ class RapidTestCommand(sublime_plugin.TextCommand):
 			print("rapid is already running!")
 		else:
 			print("rapid is not running!")
+
 
 # TODO figure out how to move this to a separate file
 class RapidRestartGameFromRoomCommand(sublime_plugin.TextCommand):
@@ -465,6 +481,7 @@ class RapidRestartGameFromRoomCommand(sublime_plugin.TextCommand):
 
 		if m != None: return m.group(1)
 
+
 def parse_room_filename(filename):
 	m = re.search("[/\\\\]([^/^\\\\]+)[/\\\\]([^/^\\\\]+).lua", filename)
 
@@ -472,6 +489,7 @@ def parse_room_filename(filename):
 		return m.group(1), m.group(2)
 	else:
 		return None, None
+
 
 # this is a wrapper for extract and override:
 def get_filename(view): return view.file_name()

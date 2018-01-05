@@ -16,7 +16,6 @@ TODO
 ----
 
 - Debugger
-- change full help keyboard shortcut from F2 to CTRL+F1 - it overrides bookmarks
 - investigate using regions on RapidOutputView to colorize helps and make them easier to read
 - Refactoring ideas:
 	- strip /// and whitespace already when scanning files from RapidCollector
