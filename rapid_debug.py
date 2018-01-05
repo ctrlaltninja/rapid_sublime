@@ -84,6 +84,7 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 			'p': self.ping,
 			'idle': self.idle,
 			'q': self.stop,
+			'd': self.dump,
 		}
 
 	def run(self):
@@ -118,6 +119,11 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def canceled(self):
 		self.active = False
 
+	def dump(self):
+		# TODO parse variable name from input
+		# self.window.run_command("rapid_debug_dump_variable", { 'variables': ["config"] })
+		self.window.run_command("rapid_debug_dump_variable", { 'variables': [] })
+
 	def go(self):
 		self.window.run_command("rapid_debug_run")
 
@@ -140,3 +146,26 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 class RapidDebugStopSessionCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		send_cmd("Debug.stop()")
+
+class RapidDebugDumpVariable(sublime_plugin.WindowCommand):
+	def run(self, variables=None):
+		if not variables or len(variables) == 0:
+			# no variable name given -> try to get it from the active view
+			view = self.window.active_view()
+
+			# get all selected regions and expand 0-length regions to cover words.
+			regions = [r if r.a != r.b else view.word(r) for r in view.sel()]
+
+			# get contents
+			variables = [view.substr(r) for r in regions]
+			variables = [v for v in variables if v != None and v != '']
+
+		# still no variables? ask it from the user using an input panel
+		if not variables or len(variables) == 0:
+			self.window.show_input_panel(
+				"Dump Expression", "",
+				lambda t: self.window.run_command("rapid_debug_dump_variable", { 'variables': [t]}),
+				None,
+				None)
+		else:
+			send_cmd(";".join(["Debug.dump_variable(%(varname)s)" % { 'varname': v } for v in variables]))

@@ -64,10 +64,10 @@ def findClass(pattern, callsite=False):
 
 def find_impl(command, edit, full):
 	cursor_pos = command.view.sel()[0].begin()
-	
+
 	region = command.view.word(cursor_pos)
 	pattern = command.view.substr(region)
-	print("Pattern is: " + pattern)
+	#print("Pattern is: " + pattern)
 	#RapidOutputView.printMessage("Pattern is: " + pattern)
 
 	if len(pattern) == 0:
