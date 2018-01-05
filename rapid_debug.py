@@ -3,6 +3,7 @@ import sublime, sublime_plugin
 from .rapid import RapidConnectionThread
 from .rapid_output import RapidOutputView
 from .rapid_utils import escape_filename
+from .rapid_utils import clear_current_row_icons
 
 REGION_KEY = "breakpoint"
 
@@ -10,6 +11,7 @@ class RapidDebugRunCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		RapidConnectionThread.sendString("\nDebug.run()")
 		RapidOutputView.printMessage("Running...")
+		clear_current_row_icons()
 
 class RapidDebugStepCommand(sublime_plugin.WindowCommand):
 	def run(self):
