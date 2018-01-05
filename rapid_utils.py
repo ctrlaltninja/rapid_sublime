@@ -2,6 +2,13 @@ import os
 import re
 import sublime
 
+# the Sublime region key for the current row marker for the debugger
+CURRENT_REGION_KEY = "current"
+
+# the icon to place in the gutter for the current row
+CURRENT_REGION_ICON = "Packages/rapid_sublime/icons/current_line.png"
+
+
 def open_file_location(file_name, row):
 	window_found = sublime.active_window()
 	path = None
@@ -45,19 +52,40 @@ def escape_filename(filename):
 	return filename.replace("\\", "/").replace('"', r'\"')
 
 
+def clear_current_row_icons():
+	# clear the markers from all open files
+	for window in sublime.windows():
+		for view in window.views():
+			view.erase_regions(CURRENT_REGION_KEY)
+
+
+def focus_current_row(filename, row):
+	clear_current_row_icons()
+
+	# open file location
+	success, err = open_file_location(filename, row)
+
+	if success:
+		# show current row in gutter
+		view = sublime.active_window().active_view()
+
+		# I wonder why a copy of the selection is needed:
+		regions = [s for s in view.sel()]
+		view.add_regions(CURRENT_REGION_KEY, regions, "mark", CURRENT_REGION_ICON, sublime.HIDDEN)
+
+	return success, err
+
+
+# TODO rename to parse_debug_message
 def parseDebugMessage(cmd):
+	# perhaps convert this to a function with no side-effects and make the callsite
+	# do the dispatching based on the result value?
 	matches = re.match('#ATLINE (.*):(.*)', cmd)
+
 	if matches:
 		filename = matches.group(1)
-		line = matches.group(2)
+		row = matches.group(2)
 
-		success, err = open_file_location(filename, line)
+		return focus_current_row(filename, row)
 
-		if success:
-			# show current line in gutter
-			view = sublime.active_window().active_view()
-			region = [s for s in view.sel()]
-			icon = "Packages/rapid_sublime/icons/current_line.png"
-			view.add_regions("current", region, "mark", icon, sublime.HIDDEN)
-
-		return success, err
+	return True, None
