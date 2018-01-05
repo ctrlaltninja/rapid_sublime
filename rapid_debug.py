@@ -83,6 +83,7 @@ def enum(*sequential, **named):
 Command = enum(
 	'UNKNOWN',
 	'DUMP',
+	'HELP',
 	'IDLE',
 	'PING',
 	'REMOVE_ALL_BREAKPOINTS',
@@ -94,6 +95,8 @@ command_map = {
 	'cb': Command.REMOVE_ALL_BREAKPOINTS,
 	'd': Command.DUMP,
 	'g': Command.RUN,
+	'h': Command.HELP,
+	'help': Command.HELP,
 	'idle': Command.IDLE,
 	'p': Command.PING,
 	'q': Command.STOP,
@@ -114,12 +117,13 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 		self.active = False
 		# TODO use metaprogramming to generate this on the fly
 		self.method_map = {
+			Command.DUMP					: self.dump,
+			Command.HELP					: self.help,
+			Command.IDLE					: self.idle,
+			Command.PING					: self.ping,
 			Command.REMOVE_ALL_BREAKPOINTS	: self.remove_all_breakpoints,
 			Command.RUN						: self.go,
-			Command.PING					: self.ping,
-			Command.IDLE					: self.idle,
 			Command.STOP					: self.stop,
-			Command.DUMP					: self.dump,
 			Command.UNKNOWN					: self.unknown,
 		}
 
@@ -159,6 +163,18 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 
 	def go(self):
 		self.window.run_command("rapid_debug_run")
+
+	def help(self):
+		# TODO use a dictionary or something.
+		out(
+			"""The following commands are available:
+
+				cb			Clear all breakpoints.
+				d <var>		Dump expression <var>.
+				g			Continue running.
+				h			Show this help.
+				q			Stop debugging session.
+			""")
 
 	def idle(self):
 		out("---")

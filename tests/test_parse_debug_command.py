@@ -8,6 +8,8 @@ class Test_parse_debug_command(TestCase):
 			'cb'	: (Command.REMOVE_ALL_BREAKPOINTS, None),
 			'cb '	: (Command.REMOVE_ALL_BREAKPOINTS, None),
 			'g'		: (Command.RUN, None),
+			'h'		: (Command.HELP, None),
+			'help'	: (Command.HELP, None),
 			'idle'	: (Command.IDLE, None),
 			'q'		: (Command.STOP, None),
 
