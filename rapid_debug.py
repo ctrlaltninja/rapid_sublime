@@ -5,6 +5,7 @@ from .rapid_output import RapidOutputView
 from .rapid_utils import escape_filename
 from .rapid_utils import clear_current_row_icons
 from .rapid_utils import clear_region_from_all_views
+from .rapid_utils import escape_lua_string
 
 REGION_KEY = "breakpoint"
 
@@ -168,4 +169,6 @@ class RapidDebugDumpVariable(sublime_plugin.WindowCommand):
 				None,
 				None)
 		else:
-			send_cmd(";".join(["Debug.dump_variable(%(varname)s)" % { 'varname': v } for v in variables]))
+			cmds = ['Debug.dump_variable(%(var)s, "%(desc)s")' % { 'var': v, 'desc': escape_lua_string(v) } for v in variables]
+			print(cmds)
+			send_cmd(";".join(cmds))

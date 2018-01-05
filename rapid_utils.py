@@ -52,6 +52,9 @@ def escape_filename(filename):
 	return filename.replace("\\", "/").replace('"', r'\"')
 
 
+def escape_lua_string(str):
+	return str.replace("\n", "\\n").replace('"', r'\"').replace("'", r'\'')
+
 def clear_region_from_all_views(region_key):
 	for window in sublime.windows():
 		for view in window.views():
