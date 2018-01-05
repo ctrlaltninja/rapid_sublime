@@ -8,7 +8,7 @@ import re
 
 from .rapid_output import RapidOutputView
 from .rapid_parse import RapidSettings
-from .rapid_utils import parseDebugMessage
+from .rapid_utils import parse_debug_message
 
 # to run execute from the console:
 # view.run_command('rapid_eval')
@@ -90,7 +90,7 @@ class RapidConnectionThread(threading.Thread):
 
 		# process debug commands
 		if msg.startswith("#"):
-			success, err = parseDebugMessage(msg)
+			success, err = parse_debug_message(msg)
 
 			if not success:
 				RapidOutputView.printMessage(err)

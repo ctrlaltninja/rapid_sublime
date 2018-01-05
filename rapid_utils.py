@@ -77,7 +77,7 @@ def focus_current_row(filename, row):
 
 
 # TODO rename to parse_debug_message
-def parseDebugMessage(cmd):
+def parse_debug_message(cmd):
 	# perhaps convert this to a function with no side-effects and make the callsite
 	# do the dispatching based on the result value?
 	matches = re.match('#ATLINE (.*):(.*)', cmd)
