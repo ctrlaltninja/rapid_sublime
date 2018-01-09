@@ -43,9 +43,9 @@ def open_file_location(file_name, row):
 		else:
 			window_found.focus_group(0)
 		view = window_found.open_file(path + ":" + str(row), sublime.ENCODED_POSITION)
-		return (True, None)
+		return True, None
 	else:
-		return (False, "%(file)s not found in project folders." % { 'file': file_name })
+		return False, "%(file)s not found in project folders." % { 'file': file_name }
 
 
 def escape_filename(filename):
@@ -64,6 +64,10 @@ def clear_region_from_all_views(region_key):
 def clear_current_row_icons():
 	clear_region_from_all_views(CURRENT_REGION_KEY)
 
+def _highlight_current_row():
+	view = sublime.active_window().active_view()
+	regions = [view.line(r) for r in view.sel()]
+	view.add_regions(CURRENT_REGION_KEY, regions, "region.yellowish", CURRENT_REGION_ICON)
 
 def focus_current_row(filename, row):
 	clear_current_row_icons()
@@ -72,12 +76,10 @@ def focus_current_row(filename, row):
 	success, err = open_file_location(filename, row)
 
 	if success:
-		# show current row in gutter
-		view = sublime.active_window().active_view()
-
-		# I wonder why a copy of the selection is needed:
-		regions = [s for s in view.sel()]
-		view.add_regions(CURRENT_REGION_KEY, regions, "mark", CURRENT_REGION_ICON, sublime.HIDDEN)
+		# show current row in the gutter
+		# using a timer: the view may not be opened yet and therefore
+		# Sublime will just ignore it for now. So do it later.
+		sublime.set_timeout(_highlight_current_row, 100)
 
 	return success, err
 

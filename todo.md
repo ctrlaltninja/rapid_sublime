@@ -31,15 +31,14 @@ TODO
 - proper lua parser
 
 - Debugger
-    - visualize current line with background color
     - show a special icon when the current line is on a line with breakpoint
-    - fix bug: still doesn't show current line marker for newly opened views
-    - dump upvalues
 
     - start debugging when setting breakpoint
     - keyboard shortcut for focusing to debug input: pause/break
     - traceback dump
 
+    - bug: a row in incorrect file may be highlighted
+        - the _highlight_current_row function uses the active_window / active_sheet, which may occasionally return another window if you have multiple windows open
     - improve dump variable
         - parsing of DUMPV messages
         - improve context checking so that it can parse things like config.width without selecting it all
