@@ -1,6 +1,7 @@
 import os
 import re
 import sublime
+from rapid_sublime.rapid_base import editorState
 
 # the Sublime region key for the current row marker for the debugger
 CURRENT_REGION_KEY = "current"
@@ -84,13 +85,13 @@ def focus_current_row(filename, row):
 	return success, err
 
 
-# TODO rename to parse_debug_message
 def parse_debug_message(cmd):
 	# perhaps convert this to a function with no side-effects and make the callsite
 	# do the dispatching based on the result value?
 	matches = re.match('#ATLINE (.*):(.*)', cmd)
 
 	if matches:
+		editorState.breakIntoDebugger()
 		filename = matches.group(1)
 		row = matches.group(2)
 

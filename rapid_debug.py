@@ -2,6 +2,7 @@ import os
 import re
 import sublime, sublime_plugin
 from .rapid import RapidConnectionThread
+from .rapid_base import editorState
 from .rapid_output import RapidOutputView
 from .rapid_utils import escape_filename
 from .rapid_utils import clear_current_row_icons
@@ -19,12 +20,14 @@ def out(msg):
 class RapidDebugRunCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		send_cmd("Debug.run()")
+		editorState.run()
 		out("Running...")
 		clear_current_row_icons()
 
 class RapidDebugStepCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		send_cmd("Debug.step()")
+		editorState.run()
 
 class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -59,6 +62,9 @@ class RapidDebugToggleBreakpoint(sublime_plugin.TextCommand):
 		for point in removed_points:
 			row,_ = self.view.rowcol(point)
 			self.removeBreakpoint(filename, row + 1)
+
+		if len(new_points) > 0 and not editorState.debugging:
+			self.view.window().run_command("rapid_debug_start_session", { 'session': 'start' })
 
 	def setBreakpoint(self, filename, row):
 		filename = escape_filename(filename)
@@ -132,6 +138,7 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 			# Signal the server side that we want to start debugging
 			send_cmd("Debug.start()")
 			out("Started.")
+			editorState.startDebugging()
 
 		self.active = True
 		self.show_panel()
@@ -191,7 +198,6 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 	def stop(self):
 		self.window.run_command("rapid_debug_stop_session")
 		self.active = False
-		out("Stopped.")
 
 	def unknown(self):
 		out("Unknown command; use h for help.")
@@ -200,6 +206,13 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 class RapidDebugStopSessionCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		send_cmd("Debug.stop()")
+		editorState.stopDebugging()
+
+		if editorState.stopped:
+			self.window.run_command('rapid_debug_run')
+
+		self.window.run_command('rapid_debug_remove_all_breakpoints')
+		out("Debugger detached.")
 
 
 class RapidDebugDumpVariable(sublime_plugin.WindowCommand):

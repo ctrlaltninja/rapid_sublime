@@ -38,7 +38,7 @@ TODO
 - proper lua parser
 
 - Debugger
-    - start debugging when setting breakpoint
+    - dump locals
     - dump upvalues
     - traceback dump
     - show a special icon when the current line is on a line with breakpoint
