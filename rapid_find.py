@@ -62,7 +62,7 @@ def findClass(pattern, callsite=False):
 				funcName = funcName.strip()
 				yield (funcName, func.getDescription())
 
-def find_impl(command, edit, full):
+def _find_impl(command, edit, full):
 	cursor_pos = command.view.sel()[0].begin()
 
 	region = command.view.word(cursor_pos)
@@ -104,17 +104,20 @@ def find_impl(command, edit, full):
 		found = True
 
 		# signature
-		RapidOutputView.printMessage(match[0]) 
+		RapidOutputView.printMessage(match[0] + "\n") 
 
 		 # description
 		if full and match[1]:
-			RapidOutputView.printMessage(match[1])
+			# TODO go through /// and remove extra line breaks -> this works nicer
+			RapidOutputView.printMessage("\t" + match[1] + "\n")
 
-	if not found:
+	if found:
+		RapidOutputView.printMessage("\n")
+	else:
 		RapidOutputView.printMessage("Find: no match for \"" + pattern +"\"")
 
 class RapidFindShortCommand(sublime_plugin.TextCommand):
-	def run(self, edit): find_impl(self, edit, False)
+	def run(self, edit): _find_impl(self, edit, False)
 
 class RapidFindFullCommand(sublime_plugin.TextCommand):
-	def run(self, edit): find_impl(self, edit, True)
+	def run(self, edit): _find_impl(self, edit, True)
