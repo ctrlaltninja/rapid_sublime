@@ -1,5 +1,6 @@
 [
-    { "caption": "Rapid: Debug - Start Session", "command": "rapid_debug_start_session" },
+    { "caption": "Rapid: Debug - Start Session", "command": "rapid_debug_start_session", "args": { "session": "start" } },
+    { "caption": "Rapid: Debug - Focus Command Line", "command": "rapid_debug_start_session", "args": { "session": "nop" } },
     { "caption": "Rapid: Debug - Continue", "command": "rapid_debug_run" },
     { "caption": "Rapid: Debug - Step Into", "command": "rapid_debug_step" },
     { "caption": "Rapid: Debug - Stop Session", "command": "rapid_debug_stop_session" },

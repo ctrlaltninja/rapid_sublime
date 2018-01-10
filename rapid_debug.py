@@ -127,12 +127,14 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 			Command.UNKNOWN					: self.unknown,
 		}
 
-	def run(self):
-		# Signal the server side that we want to start debugging
-		send_cmd("Debug.start()")
-		self.show_panel()
+	def run(self, session = "start"):
+		if session == "start":
+			# Signal the server side that we want to start debugging
+			send_cmd("Debug.start()")
+			out("Started.")
+
 		self.active = True
-		out("Started.")
+		self.show_panel()
 
 	def show_panel(self):
 		self.view = self.window.show_input_panel(
@@ -198,6 +200,7 @@ class RapidDebugStartSessionCommand(sublime_plugin.WindowCommand):
 class RapidDebugStopSessionCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		send_cmd("Debug.stop()")
+
 
 class RapidDebugDumpVariable(sublime_plugin.WindowCommand):
 	def run(self, variables=None):

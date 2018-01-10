@@ -36,6 +36,7 @@
     { "keys": ["shift+f9"], "command": "rapid_debug_dump_variable" },
     { "keys": ["ctrl+f9"], "command": "rapid_debug_remove_all_breakpoints" },
     { "keys": ["f10"], "command": "rapid_debug_step" },
+    { "keys": ["pause"], "command": "rapid_debug_start_session", "args": { "session": "nop" } },
     // { "keys": ["f10"], "command": "rapid_lua_check" },
     // { "keys": ["ctrl+f10"], "command": "rapid_lua_check_all" }
     { "keys": ["§"], "command": "show_panel", "args": {"panel": "console", "toggle": true} }

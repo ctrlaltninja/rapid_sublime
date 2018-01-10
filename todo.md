@@ -16,6 +16,8 @@ TODO
 ----
 
 - fix static analysis / LuaCheck
+- disconnect from Shinobi when plugin is being unloaded
+    - kill thread, too
 - continuous testing support a'la NCrunch
 - investigate using regions / phantoms on RapidOutputView to colorize helps and make them easier to read
 - Refactoring ideas:
@@ -28,14 +30,23 @@ TODO
 	- rename rapid_parse.py to rapid_settings.py
 	- remove HLSL support, we are not using it anyway and it does not probably work
 	- define protocol between Shinobi / editor a bit more precisely
+    - create a state machine around the editor
+        - states
+            - not connected
+            - connected
+            - debugging
 - proper lua parser
 
 - Debugger
-    - show a special icon when the current line is on a line with breakpoint
-
     - start debugging when setting breakpoint
-    - keyboard shortcut for focusing to debug input: pause/break
+    - dump upvalues
     - traceback dump
+    - show a special icon when the current line is on a line with breakpoint
+        - difficult, because requires very exact management of regions
+        - should probably maintain internal state
+            - list of breakpoints
+            - current row
+            - then reconstruct the regions from this info whenever need be
 
     - bug: a row in incorrect file may be highlighted
         - the _highlight_current_row function uses the active_window / active_sheet, which may occasionally return another window if you have multiple windows open

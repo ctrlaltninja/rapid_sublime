@@ -27,9 +27,9 @@ def parse_file_location(line):
 		file_name = test[0].strip()
 		file_row = int(test[1])
 
-		return (file_name, file_row)
+		return file_name, file_row
 	else:
-		return None
+		return None, None
 
 class RapidOutputView():
 	name = "Rapid Output"
