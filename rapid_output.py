@@ -7,21 +7,11 @@ from .rapid_utils import open_file_location
 def parse_file_location(line):
 	file_name_and_row = None
 
-	groups = re.findall(r"([-/\w\d:]+\.lua:\d+)", line)
+	groups = re.findall(r"([-/\w\d:\.]+:\d+)", line)
 	if len(groups) > 0:
 		file_name_and_row = groups[-1]
 
-	# try to find hlsl file
-	if file_name_and_row == None:
-		found_text = re.search(r'[^ ]+hlsl[^ ]+', line)
-		if found_text != None:
-			file_name_and_row = found_text.group(0)
-
 	if file_name_and_row:
-		# TODO tidy up hlsl pattern so that this is not required (lua version doesn't need this)
-		if file_name_and_row.endswith(":"):
-			file_name_and_row = file_name_and_row[:-1]
-
 		#split on the last occurence of ':'
 		test = file_name_and_row.rsplit(':', 1)
 		file_name = test[0].strip()

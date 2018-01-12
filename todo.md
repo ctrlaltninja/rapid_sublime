@@ -28,7 +28,6 @@ TODO
 	- rename RapidOutputView.printMessage to just print
 	- get rid of repeating "Rapid" on classnames. It bears no information.
 	- rename rapid_parse.py to rapid_settings.py
-	- remove HLSL support, we are not using it anyway and it does not probably work
 	- define protocol between Shinobi / editor a bit more precisely
     - create a state machine around the editor
         - states
@@ -38,7 +37,6 @@ TODO
 - proper lua parser
 
 - Debugger
-    - dump locals
     - dump upvalues
     - traceback dump
     - show a special icon when the current line is on a line with breakpoint
