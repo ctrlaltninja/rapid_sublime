@@ -236,6 +236,6 @@ class RapidDebugDumpVariable(sublime_plugin.WindowCommand):
 				None,
 				None)
 		else:
-			cmds = ['Debug.dump_variable(%(var)s, "%(desc)s")' % { 'var': v, 'desc': escape_lua_string(v) } for v in variables]
+			cmds = ['Debug.dump_variable("%(var)s")' % { 'var': escape_lua_string(v) } for v in variables]
 			print(cmds)
 			send_cmd(";".join(cmds))
