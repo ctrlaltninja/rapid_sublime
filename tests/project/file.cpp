@@ -13,3 +13,6 @@ void foo_bar2(int x, int y) {}
 
 /// blabla
 void foo_bar3(int x, int y) {}
+
+/// a1,... = variadic_return(x, y)
+void variadic_return(int x, int y) {}

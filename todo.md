@@ -37,6 +37,8 @@ TODO
 - proper lua parser
 
 - Debugger
+    - bug: dump variable dumps shadowed locals
+        - e.g. multiple scopes with local "x" -> may dump wrong x
     - dump upvalues
     - traceback dump
     - show a special icon when the current line is on a line with breakpoint

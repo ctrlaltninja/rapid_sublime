@@ -19,6 +19,12 @@ class TestFind(TestCase):
         expected = sorted(['foo1(x)', 'function foo1(param1, param2, ...)'])
         self.assertEqual(expected, results)
 
+    def test_variadic_return(self):
+        results = sorted(list(map(lambda r: r[0], find("variadic_return"))))
+
+        expected = sorted(['a1,... = variadic_return(x, y)'])
+        self.assertEqual(expected, results)
+
     def test_methods(self):
         results = sorted(list(map(lambda r: r[0], find("bar"))))
 
