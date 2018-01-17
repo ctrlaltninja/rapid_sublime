@@ -418,14 +418,14 @@ class RapidRestartGameFromRoomCommand(sublime_plugin.TextCommand):
 		# TODO evaluate only lua files
 		for region in self.view.sel():
 			room_name = self.find_room_name(region)
-			world_name, level_name = parse_room_filename(filename)
+			level_name = parse_room_filename(filename)
 
-			if world_name != None and room_name != None:
-				cmd = '@:1\nrestart_game("{0}","{1}","{2}");shb_bring_to_front(g.window);'
-				RapidConnectionThread.sendString(cmd.format(world_name, level_name, room_name))
+			if level_name != None and room_name != None:
+				cmd = '@:1\nrestart_game("{0}","{1}");shb_bring_to_front(g.window);'
+				RapidConnectionThread.sendString(cmd.format(level_name, room_name))
 			else: 
-				if world_name == None:
-					RapidOutputView.printMessage("The path does not follow convention /worlds/world/level.lua -> could not determine world.")
+				if level_name == None:
+					RapidOutputView.printMessage("The path does not follow convention /levels/level.lua -> could not determine level name.")
 				elif level_name == None:
 					RapidOutputView.printMessage("No name=\"...\" found from selection -> could not determine room name.")
 
@@ -483,13 +483,7 @@ class RapidRestartGameFromRoomCommand(sublime_plugin.TextCommand):
 
 
 def parse_room_filename(filename):
-	m = re.search("[/\\\\]([^/^\\\\]+)[/\\\\]([^/^\\\\]+).lua", filename)
-
-	if m:
-		return m.group(1), m.group(2)
-	else:
-		return None, None
-
+	return filename.replace("\\", "/").replace(".lua", ".level")
 
 # this is a wrapper for extract and override:
 def get_filename(view): return view.file_name()

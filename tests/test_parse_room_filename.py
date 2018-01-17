@@ -4,19 +4,16 @@ from rapid_sublime.rapid import parse_room_filename
 
 class TestParseRoomFilename(TestCase):
     def test_slashes_returns_names(self):
-        world, level = parse_room_filename('data/worlds/world1/level1.lua')
+        level = parse_room_filename('data/levels/level1.lua')
 
-        self.assertEqual("world1", world)
-        self.assertEqual("level1", level)
+        self.assertEqual("data/levels/level1.level", level)
 
     def test_backslashes_returns_names(self):
-        world, level = parse_room_filename(r'c:\foo\worlds\world1\level1.lua')
+        level = parse_room_filename(r'c:\foo\levels\level1.lua')
 
-        self.assertEqual("world1", world)
-        self.assertEqual("level1", level)
+        self.assertEqual(r'c:/foo/levels/level1.level', level)
 
-    def test_invalid_returns_none(self):
-        world, level = parse_room_filename('level1.lua')
+    def test_local_file_returns_name(self):
+        level = parse_room_filename('level1.lua')
 
-        self.assertEqual(None, world)
-        self.assertEqual(None, level)
+        self.assertEqual("level1.level", level)

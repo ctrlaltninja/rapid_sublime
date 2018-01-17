@@ -26,13 +26,13 @@ class TestRestartGameFromRoomCommand(TestCase):
 
         self.view.run_command("rapid_restart_game_from_room")
 
-        template = '@:1\nrestart_game("world","level","{0}");shb_bring_to_front(g.window);'
+        template = '@:1\nrestart_game("c:/game/data/levels/level.level","{0}");shb_bring_to_front(g.window);'
         connection.sendString.assert_called_with(template.format(room_name))
 
     @patch('rapid_sublime.rapid.get_filename')
     @patch('rapid_sublime.rapid.RapidConnectionThread')
     def test_multiline(self, connection, get_filename):
-        get_filename.return_value = r"c:\game\data\worlds\world\level.lua"
+        get_filename.return_value = r"c:\game\data\levels\level.lua"
 
         self.setText("""
             def_room { name = "room1" }
@@ -69,7 +69,7 @@ class TestRestartGameFromRoomCommand(TestCase):
     @patch('rapid_sublime.rapid.get_filename')
     @patch('rapid_sublime.rapid.RapidConnectionThread')
     def test_valid_single_line_all_selected(self, connection, get_filename):
-        get_filename.return_value = r"/game/data/worlds/world/level.lua"
+        get_filename.return_value = r"/game/data/levels/level.lua"
 
         self.setText("""def_room{ name = "room_name", on_init_room = function(map) end, }""")
 
@@ -78,12 +78,12 @@ class TestRestartGameFromRoomCommand(TestCase):
 
         self.view.run_command("rapid_restart_game_from_room")
     
-        connection.sendString.assert_called_with("""@:1\nrestart_game("world","level","room_name");shb_bring_to_front(g.window);""")
+        connection.sendString.assert_called_with("""@:1\nrestart_game("/game/data/levels/level.level","room_name");shb_bring_to_front(g.window);""")
 
     @patch('rapid_sublime.rapid.get_filename')
     @patch('rapid_sublime.rapid.RapidConnectionThread')
     def test_valid_single_line_empty_selection_after_name(self, connection, get_filename):
-        get_filename.return_value = r"/game/data/worlds/world/level.lua"
+        get_filename.return_value = r"/game/data/levels/level.lua"
         self.setText("""def_room{ name = "room_name", on_init_room = function(map) end, }""")
 
         # place the cursor before room_name
@@ -93,7 +93,7 @@ class TestRestartGameFromRoomCommand(TestCase):
 
         self.view.run_command("rapid_restart_game_from_room")
     
-        connection.sendString.assert_called_with("""@:1\nrestart_game("world","level","room_name");shb_bring_to_front(g.window);""")
+        connection.sendString.assert_called_with("""@:1\nrestart_game("/game/data/levels/level.level","room_name");shb_bring_to_front(g.window);""")
 
     @patch('rapid_sublime.rapid.RapidConnectionThread')
     def test_no_name_empty_selection(self, connection):
