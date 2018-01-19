@@ -25,6 +25,7 @@ class TestRapidCollector_FullProject(TestCase):
             'function tbl:foo()',
             'function tbl.bar()',
             '/// foo1(x)',
+            '/// r1, r2, r3, r4 = multiple_returns(cbuffer, index)',
             '/// baz,boz = foobar(x, y)',
             '/// Foo.bar(x, y)',
             '/// baz,boz = Foo.bar(x, y)',

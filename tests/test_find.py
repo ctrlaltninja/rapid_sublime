@@ -57,4 +57,10 @@ class TestFind(TestCase):
         results = sorted(list(map(lambda r: r[0], find("baz", True))))
 
         expected = sorted(['function baz()'])
-        self.assertEqual(expected, results)        
+        self.assertEqual(expected, results)
+
+    def test_callsite_multiple_returns(self):
+        results = sorted(list(map(lambda r: r[0], find("multiple_returns", True))))
+
+        expected = sorted(['r1, r2, r3, r4 = multiple_returns(cbuffer, index)'])
+        self.assertEqual(expected, results)

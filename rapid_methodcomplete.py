@@ -79,7 +79,7 @@ class RapidCollector():
 								signature = matches.group(2)
 							else:
 								# match global functions with return values, e.g. "/// baz,boz = foobar(x, y)"
-								matches = re.match('///\s*(?:[,\w]|\.\.\.)+\s*=\s*(\w+)[\({](.*)[\)}]', line)
+								matches = re.match('///\s*(?:[,\w\s]|\.\.\.)+\s*=\s*(\w+)[\({](.*)[\)}]', line)
 								if matches != None:
 									name = matches.group(1)
 									signature = matches.group(2)
