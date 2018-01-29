@@ -79,12 +79,15 @@ class RapidOutputViewInsertCommand(sublime_plugin.TextCommand):
 		#	self.view.window().run_command("rapid_luacheck_load_static_analysis")
 		#	return
 
+		tailing = view.size() == view.sel()[0].a
+
 		view.set_read_only(False)
 		view.insert(edit, view.size(), msg)
 		view.set_read_only(True)
 
-		region = view.full_line(view.size())
-		view.show(region)
+		if tailing:
+			region = view.full_line(view.size())
+			view.show(region)
 
 class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
