@@ -78,23 +78,17 @@ def _find_impl(command, edit, full):
 	word_end_pos = max(region.a, region.b)
 	callsite = "(" == command.view.substr(sublime.Region(word_end_pos, word_end_pos + 1))
 
-	words = command.view.substr(command.view.line(cursor_pos)).split()
-	
-	#RapidOutputView.printMessage("Words are: " + str(words))
-
-	for word in words:
-		if "*" in word:
-			#Handle edge cases for class find
-			if (pattern in word or 
-				"*\n" in pattern or "* " in pattern or 
-				"\n*" in pattern or " *" in pattern):
-				pattern = word
-				break
-
+	# Check left and right from the pattern word: if there is a dot or
+	# a wildcard, we are checking for classes and the selection should be expanded
 	find_class_methods = False
-	if "*" in pattern and "." in pattern:
+	left = command.view.substr(sublime.Region(region.begin()-1, region.begin()))
+	right = command.view.substr(sublime.Region(region.end(), region.end()+1))
+
+	if left == '.' or left == '*' or right == '.' or right == '*':
 		find_class_methods = True
-	
+		region = command.view.expand_by_class(region, sublime.CLASS_LINE_START | sublime.CLASS_LINE_END, ".* \t")
+		pattern = command.view.substr(region)
+
 	pattern2 = pattern.lower().strip()
 
 	found = False
