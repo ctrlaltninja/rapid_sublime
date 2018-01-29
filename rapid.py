@@ -150,9 +150,8 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 	# Checks if the cursor is inside lua function() block
 	def checkBlock(self, view, current_row, line_contents, cursor_pos):
 		#added special case check for comments inside a block which might have no indentation
-		if self.view.indentation_level(cursor_pos) > 0 \
-		or ( self.view.indentation_level(cursor_pos) == 0 \
-		and line_contents.startswith("--") ):
+		ilevel = self.view.indentation_level(cursor_pos)
+		if ilevel > 0 or (ilevel == 0 and line_contents.startswith("--")):
 			return True
 		elif line_contents.strip() == '':
 			# cursor might be on an empty unintended row inside block
@@ -161,29 +160,29 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			index = 1
 
 			# find first previous non-empty row
-			block_start = False
-			while not block_start:
+			while True:
 				start_row = current_row - index
 				start_pos = self.view.text_point(start_row, 0)
 				start_line = self.view.full_line(start_pos)
 				start_line_contents = self.view.substr(start_line)
 				if start_line_contents.strip() != '':
-					block_start = True
+					break
 				else:
 					index = index + 1
 
 			#find first next non-empty row
 			index = 1
-			block_end = False
-			while not block_end:
+			last_pos = -1
+			while True:
 				end_row = current_row + index
 				end_pos = self.view.text_point(end_row, 0)
 				end_line = self.view.full_line(end_pos)
 				end_line_contents = self.view.substr(end_line)
-				if end_line_contents.strip() != '':
-					block_end = True
+				if last_pos == end_pos or end_line_contents.strip() != '':
+					break
 				else:
 					index = index + 1
+				last_pos = end_pos
 
 			# Assume that the cursor is inside a function block if:
 			# 1) start_row and end_row have indentation level > 0 OR
@@ -240,15 +239,19 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 					#find end of the block
 					index = 1
 					block_end = False
-					while not block_end:
+					last_pos = -1
+					while True:
 						end_row = current_row + index
 						end_pos = self.view.text_point(end_row, 0)
+						if end_pos == last_pos:
+							break
+						last_pos = end_pos
 						end_line = self.view.full_line(end_pos)
 						end_line_contents = self.view.substr(end_line)
-						if self.view.indentation_level(end_pos) == 0 \
-						and end_line_contents.strip() != '' \
-						and not end_line_contents.startswith("--"):
-							block_end = True
+						if self.view.indentation_level(end_pos) == 0:
+							if end_line_contents.strip() != '':
+								if not end_line_contents.startswith("--"):
+									break
 						else:
 							index = index + 1
 					
