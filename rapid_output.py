@@ -97,11 +97,6 @@ class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 			view.erase(edit, sublime.Region(0, view.size()))
 			view.set_read_only(True)
 
-# class RapidOutputViewListener(sublime_plugin.EventListener):
-# 	def on_close(self, view):
-# 		if view.name() == RapidOutputView.name:
-# 			sublime.active_window().set_layout( {"cols": [0.0, 1.0], "rows": [0.0, 1.0], "cells": [[0,0,1,1]] } )
-
 class RapidDoubleClick(sublime_plugin.WindowCommand):
 	def run(self):
 		view = sublime.active_window().active_view()
@@ -138,24 +133,3 @@ class RapidOutputEventListener(sublime_plugin.EventListener):
 					if view.name() == RapidOutputView.name:
 						return True
 		return False
-
-# class RapidFileOpenListener(sublime_plugin.EventListener):
-#
-# 	# empty files (except Server Output View) are always created on the focus_group(0)
-# 	def on_new(self, view):
-# 		window = sublime.active_window()
-# 		window.focus_group(0)
-#
-# 	# loaded files are always brought to focus_group(0)
-# 	def on_load(self, view):
-# 		window = sublime.active_window()
-# 		if window.active_group() != 0:
-# 			active_view = window.active_view_in_group(0)
-# 			active_group, active_view_index = window.get_view_index(active_view)
-# 			if active_view_index == -1:
-# 				views = window.views_in_group(0)
-# 				active_view_index = len(views)
-# 			else:
-# 				active_view_index = active_view_index + 1
-# 			window.focus_group(0)
-# 			window.set_view_index(view, 0, active_view_index)
