@@ -286,11 +286,11 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			line_str = self.view.substr(line)
 			line_contents = "@" + file_name + ":" + file_row_str + "\n" + line_str
 			
-			print("------")
-			print("Sending: ", file_name)
-			print("Sending contents:")
-			print(line_contents)
-			print("------")
+			# print("------")
+			# print("Sending: ", file_name)
+			# print("Sending contents:")
+			# print(line_contents)
+			# print("------")
 			return line_contents
 
 

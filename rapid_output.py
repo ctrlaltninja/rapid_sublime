@@ -4,6 +4,12 @@ import os
 import sublime_api
 from .rapid_utils import open_file_location
 
+def follow_tail(view):
+	size = view.size()
+	selection = view.sel()
+	selection.clear()
+	selection.add(sublime.Region(size,size))
+
 def parse_file_location(line):
 	file_name_and_row = None
 
@@ -54,7 +60,7 @@ class RapidOutputView():
 			return outputView
 			
 		return None
-		
+
 	@classmethod
 	def printMessage(self, msg):
 		RapidOutputView.messageQueue.append(msg)
@@ -108,6 +114,7 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 			line = line.replace('\\', '/')
 
 			view.run_command("expand_selection", {"to": "line"})
+			follow_tail(view)
 
 			file_name, file_row = parse_file_location(line)
 			if file_name:
