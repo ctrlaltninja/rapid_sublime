@@ -223,22 +223,20 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 					index = 1
 
 					#find start of the block
-					block_start = False
-					while not block_start:
+					while True:
 						start_row = current_row - index
 						start_pos = self.view.text_point(start_row, 0)
 						start_line = self.view.full_line(start_pos)
 						start_line_contents = self.view.substr(start_line)
 						if self.view.indentation_level(start_pos) == 0 \
-						and	start_line_contents.strip() != '' \
-						and	not start_line_contents.startswith("--"):
-							block_start = True
+						and start_line_contents.strip() != '' \
+						and not start_line_contents.startswith("--"):
+							break
 						else:
 							index = index + 1
 
 					#find end of the block
 					index = 1
-					block_end = False
 					last_pos = -1
 					while True:
 						end_row = current_row + index
@@ -248,10 +246,10 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 						last_pos = end_pos
 						end_line = self.view.full_line(end_pos)
 						end_line_contents = self.view.substr(end_line)
-						if self.view.indentation_level(end_pos) == 0:
-							if end_line_contents.strip() != '':
-								if not end_line_contents.startswith("--"):
-									break
+						if self.view.indentation_level(end_pos) == 0 \
+						and end_line_contents.strip() != '' \
+						and not end_line_contents.startswith("--"):
+							break
 						else:
 							index = index + 1
 					
@@ -288,11 +286,11 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			line_str = self.view.substr(line)
 			line_contents = "@" + file_name + ":" + file_row_str + "\n" + line_str
 			
-			#print("------")
-			#print("Sending: ", file_name)
-			#print("Sending contents:")
-			#print(line_contents)
-			#print("------")
+			print("------")
+			print("Sending: ", file_name)
+			print("Sending contents:")
+			print(line_contents)
+			print("------")
 			return line_contents
 
 
