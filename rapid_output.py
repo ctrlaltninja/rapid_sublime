@@ -4,11 +4,7 @@ import os
 import sublime_api
 from .rapid_utils import open_file_location
 
-def follow_tail(view):
-	size = view.size()
-	selection = view.sel()
-	selection.clear()
-	selection.add(sublime.Region(size,size))
+tailing = True
 
 def parse_file_location(line):
 	file_name_and_row = None
@@ -26,6 +22,10 @@ def parse_file_location(line):
 		return file_name, file_row
 	else:
 		return None, None
+
+def scroll_to_tail(view):
+	region = view.full_line(view.size())
+	view.show(region)
 
 class RapidOutputView():
 	name = "Rapid Output"
@@ -76,6 +76,7 @@ class RapidOutputView():
 			
 class RapidOutputViewInsertCommand(sublime_plugin.TextCommand):
 	def run(self, edit, msg):
+		global tailing
 		view = self.view
 
 		if not '\n' in msg:
@@ -85,15 +86,12 @@ class RapidOutputViewInsertCommand(sublime_plugin.TextCommand):
 		#	self.view.window().run_command("rapid_luacheck_load_static_analysis")
 		#	return
 
-		tailing = view.size() == view.sel()[0].a
-
 		view.set_read_only(False)
 		view.insert(edit, view.size(), msg)
 		view.set_read_only(True)
 
 		if tailing:
-			region = view.full_line(view.size())
-			view.show(region)
+			scroll_to_tail(view)
 
 class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -113,16 +111,14 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 			line = view.substr(view.line(view.sel()[0]))
 			line = line.replace('\\', '/')
 
-			view.run_command("expand_selection", {"to": "line"})
-			follow_tail(view)
-
 			file_name, file_row = parse_file_location(line)
 			if file_name:
 				success, err = open_file_location(file_name, file_row)
+				view.run_command("expand_selection", {"to": "line"})
 				if not success:
 					RapidOutputView.printMessage(err)
 			else:
-				RapidOutputView.printMessage("Could not parse file name from selection.")
+				print("Rapid: Could not parse file name from selection:", line)
 
 class RapidCloseOutputViewCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
@@ -131,6 +127,17 @@ class RapidCloseOutputViewCommand(sublime_plugin.TextCommand):
 		if view != None:
 			self.view.window().focus_view(view)
 			self.view.window().run_command("close_file")
+
+class RapidToggleTailingCommand(sublime_plugin.WindowCommand):
+	def run(self):
+		global tailing
+		tailing = not tailing
+		view = RapidOutputView.getOutputView(False)
+		if view and tailing:
+			view.erase_status("rapid_tailing")
+			scroll_to_tail(view)
+		elif view:
+			view.set_status("rapid_tailing", "*NO TAILING*")
 
 class RapidOutputEventListener(sublime_plugin.EventListener):
 	def on_query_context(self, view, key, operator, operand, match_all):

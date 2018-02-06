@@ -7,4 +7,5 @@
     { "caption": "Rapid: Debug - Clear All Breakpoints", "command": "rapid_debug_remove_all_breakpoints" },
     { "caption": "Rapid: Debug - Toggle Breakpoint", "command": "rapid_debug_toggle_breakpoint" },
     { "caption": "Rapid: Debug - Dump Variable", "command": "rapid_debug_dump_variable" },
+    { "caption": "Rapid: Toggle Output Tailing", "command": "rapid_toggle_tailing" },
 ]
