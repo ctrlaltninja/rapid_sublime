@@ -34,13 +34,13 @@ class RapidCollector():
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
+		methodPattern = re.compile('function\s*\w+[:\.](\w+)\((.*)\)')
+		funcPattern = re.compile('function\s*(\w+)\s*\((.*)\)')
+
 		for folder in self.folders:
 			luafiles = []
 			cppfiles = []
 			self.get_files_in_project(folder, luafiles, cppfiles)
-
-			methodPattern = re.compile('function\s\w+[:\.](\w+)\((.*)\)')
-			funcPattern = re.compile('function\s*(\w+)\s*\((.*)\)')
 
 			for file_name in luafiles:
 				functions = []
