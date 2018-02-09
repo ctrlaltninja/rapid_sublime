@@ -34,8 +34,7 @@ class RapidCollector():
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
-		methodPattern = re.compile('function\s*\w+[:\.](\w+)\((.*)\)')
-		funcPattern = re.compile('function\s*(\w+)\s*\((.*)\)')
+		pattern = re.compile('function\s*(?:\w+[:\.])*(\w+)\((.*)\)')
 
 		for folder in self.folders:
 			luafiles = []
@@ -47,15 +46,10 @@ class RapidCollector():
 				findFunctions = []
 				function_lines = self.findLua(file_name)
 				for line in function_lines:
-					matches = methodPattern.match(line)
+					matches = pattern.match(line)
 					if matches:
 						functions.append(Method(matches.group(1), matches.group(2), basename(file_name)))
 						findFunctions.append(FunctionDefinition(matches.group(0)))
-					else:
-						matches = funcPattern.match(line)
-						if matches:
-							functions.append(Method(matches.group(1), matches.group(2), basename(file_name)))
-							findFunctions.append(FunctionDefinition(matches.group(0)))
 				RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 				RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
 		
