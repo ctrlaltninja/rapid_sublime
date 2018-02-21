@@ -37,6 +37,7 @@ TODO
 - proper lua parser
 
 - Debugger
+    - investigate why breakpoints are not always caught
     - bug: dump variable dumps shadowed locals
         - e.g. multiple scopes with local "x" -> may dump wrong x
     - dump upvalues
