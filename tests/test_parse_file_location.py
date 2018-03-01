@@ -12,17 +12,19 @@ class TestParseFileLocation(TestCase):
             "C:/jp/shinobi/lua/fwk.lua:42: in function 'start_app'",
             "foo.level:123: in function 'bar'",
             "foo.bar.baz:123: in function 'bar'",
-            "foo...baz.bar:123: in function 'bar'" ]
+            "foo...baz.bar:123: in function 'bar'",
+            "foo.lua:86: in function <foo.lua:3>" ]
 
         expected = [
             ("C:/jp/shinobi/lua/patch_func.lua", 22),
-            ("C:/jp/shinobi/lua/fwk.lua", 44),
+            ("C:/jp/shinobi/lua/fwk.lua", 49),
             ("data/missions/mission_base.lua", 1),
             ("main.lua", 198),
             ("C:/jp/shinobi/lua/fwk.lua", 42),
             ("foo.level", 123),
             ("foo.bar.baz", 123),
             ("foo...baz.bar", 123),
+            ("foo.lua", 86),
         ]
 
         for i in range(0, len(cases)):

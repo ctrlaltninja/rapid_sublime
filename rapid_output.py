@@ -9,11 +9,17 @@ tailing = True
 def parse_file_location(line):
 	file_name_and_row = None
 
-	groups = re.findall(r"([-/\w\d:\.]+:\d+)", line)
+	# leave out lambdas: match with and without surrounding <>,
+	# but do not capture if surrounded with <>:
+	groups = re.findall(r"([-/\w\d:\.]+:\d+)|(?:<.+>)", line)
+
+	# filter out all empty strings the latter match may produce
+	groups = [g for g in groups if g != '']
+
 	if len(groups) > 0:
 		file_name_and_row = groups[-1]
 
-	if file_name_and_row:
+	if file_name_and_row and file_name_and_row != '':
 		#split on the last occurence of ':'
 		test = file_name_and_row.rsplit(':', 1)
 		file_name = test[0].strip()
