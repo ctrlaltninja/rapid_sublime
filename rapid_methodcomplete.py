@@ -24,29 +24,35 @@ from .rapid_functionstorage import Method
 from .rapid_functionstorage import FunctionDefinition
 
 class RapidCollector():
-	def __init__(self, folders, excluded_folders):
+	def __init__(self, folders, excluded_folders, included_folders):
 		self.folders = folders
 	
 		self.luaFuncPattern = re.compile('\s*function\s*')
 		self.cppFuncPattern = re.compile("///\s")
 
 		self.excluded_folders = excluded_folders
+		self.included_folders = included_folders
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
-		pattern = re.compile('function\s*(?:\w+[:\.])*(\w+)\((.*)\)')
+		luaFuncPattern = re.compile('function\s*(?:\w+[:\.])*(\w+)\((.*)\)')
+
+		settings = RapidSettings().getSettings()
+		cppFilePattern = None
+		if "CppFilePattern" in settings:
+			cppFilePattern = re.compile(settings["CppFilePattern"])
 
 		for folder in self.folders:
 			luafiles = []
 			cppfiles = []
-			self.get_files_in_project(folder, luafiles, cppfiles)
+			self.get_files_in_project(folder, cppFilePattern, luafiles, cppfiles)
 
 			for file_name in luafiles:
 				functions = []
 				findFunctions = []
 				function_lines = self.findLua(file_name)
 				for line in function_lines:
-					matches = pattern.match(line)
+					matches = luaFuncPattern.match(line)
 					if matches:
 						functions.append(Method(matches.group(1), matches.group(2), basename(file_name)))
 						findFunctions.append(FunctionDefinition(matches.group(0)))
@@ -58,7 +64,6 @@ class RapidCollector():
 				findFunctions = []
 
 				with open(file_name, 'r', encoding="ascii", errors="surrogateescape") as f:
-					#print(file_name)
 					for line in f:
 						matches = self.cppFuncPattern.match(line)
 						if matches != None:
@@ -138,15 +143,66 @@ class RapidCollector():
 		RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 		RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
 
-	def get_files_in_project(self, folder, luaFileList, cppFileList):
+	def get_files_in_project(self, folder, cppFilePattern, luaFileList, cppFileList):
 		for root, dirs, files in os.walk(folder, True):
-
 			# prune excluded folders from search
 			for excluded_folder in self.excluded_folders:
 				if excluded_folder in dirs:
 					#print("Pruning excluded folder " + excluded_folder)
 					dirs.remove(excluded_folder)
 
+			# prune everything not in included folders
+			if self.included_folders:
+				pruned_dirs = []
+
+				for dir in dirs:
+					# split current dir at '/' into fragments
+					current_dir = os.path.join(root, dir).replace("\\", "/").split("/")
+					#print("current dir is ", current_dir)
+
+					keep_dir = False
+
+					for included_folder in self.included_folders:
+						included_folder = included_folder.split("/")
+
+						current_pos = None
+						included_pos = 0
+
+						# find start of included folder pattern in current dir
+						for i, val in enumerate(current_dir):
+							if included_folder[0] == val:
+								current_pos = i
+								break
+
+						prune_dir = False
+
+						if current_pos:
+							while True:
+								if current_pos >= len(current_dir):
+									# end of current dir reached
+									break
+								if included_pos >= len(included_folder):
+									# end of included folder pattern reached
+									break
+								if current_dir[current_pos] != included_folder[included_pos]:
+									prune_dir = True
+									break
+								current_pos += 1
+								included_pos += 1
+						else:
+							prune_dir = True
+
+						if not prune_dir:
+							keep_dir = True
+
+					if not keep_dir:
+						pruned_dirs.append(dir)
+
+				for dir in pruned_dirs:
+					#print("Pruning non-included dir ", dir)
+					dirs.remove(dir)
+
+			#if check_folder:
 			for name in files:
 				if name.endswith(".lua"):
 					full_path = os.path.abspath(os.path.join(root, name))
@@ -154,8 +210,9 @@ class RapidCollector():
 					#add lua file path for static analyzer
 					RapidFunctionStorage.addLuaFile(full_path) 
 				if name.endswith(".cpp"):
-					full_path = os.path.abspath(os.path.join(root, name))
-					cppFileList.append(full_path)
+					if not cppFilePattern or cppFilePattern.match(name):
+						full_path = os.path.abspath(os.path.join(root, name))
+						cppFileList.append(full_path)
 
 class RapidCollectorThread(threading.Thread):
 	instance = None
@@ -165,11 +222,14 @@ class RapidCollectorThread(threading.Thread):
 		self.timeout = timeout
 
 		excluded_folders = []
+		included_folders = []
 		settings = RapidSettings().getSettings()
 		if "ExcludedFolders" in settings:
 			excluded_folders = settings["ExcludedFolders"]
+		if "IncludedFolders" in settings:
+			included_folders = settings["IncludedFolders"]
 
-		self.collector = RapidCollector(folders, excluded_folders)
+		self.collector = RapidCollector(folders, excluded_folders, included_folders)
 		self.collector.save_method_signatures()
 
 		#self.parse_now = False
@@ -227,7 +287,13 @@ class RapidStartCollectorCommand(sublime_plugin.TextCommand):
 		print("Collecting function definitions for autocomplete...")
 		startTime = time.time()
 
-		settings = RapidSettings().getSettings()		
+		settingsInstance = RapidSettings()
+		if not settingsInstance.settingsFileExists():
+			print("Rapid project file not found -- skipping!")
+			return
+
+		settings = settingsInstance.getSettings()
+
 		if "ParseAutoCompleteOnSave" in settings:
 			RapidCollectorListener.parseAutoComplete = settings["ParseAutoCompleteOnSave"]
 		
@@ -238,4 +304,5 @@ class RapidStartCollectorCommand(sublime_plugin.TextCommand):
 		RapidCollectorThread.instance = RapidCollectorThread(folders, 30)
 
 		RapidCollectorThread.instance.start()
+		RapidCollectorThread.instance.join()
 		RapidOutputView.printMessage("Collected function signatures in %.2f seconds." % (time.time() - startTime))

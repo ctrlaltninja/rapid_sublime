@@ -24,7 +24,7 @@ class RapidSettings():
 			for folder in folders:
 				for root, dirs, files in os.walk(folder):		
 					for name in files:
-						if name.endswith("sublime-project"):
+						if name.endswith(".sublime-project"):
 							sublime_full_project_path = os.path.abspath(os.path.join(root, name))
 							break
 					if sublime_full_project_path != None:
@@ -42,13 +42,14 @@ class RapidSettings():
 		rapid_sublime_found = False
 		for root, dirs, files in os.walk(self.sublime_project_path):
 			for name in files:
-				if name.endswith("rapid_sublime"):
+				if name.endswith(".rapid_sublime"):
 					self.full_path = os.path.abspath(os.path.join(self.sublime_project_path, name))
 					#RapidOutputView.printMessage("Rapid_Sublime full path: " + self.full_path)
 					rapid_sublime_found = True
 					break
-			if rapid_sublime_found:
-				break
+			# Do not recurse into subfolders as this can be extremely slow with big projects.
+			# The assumption here is that the rapid project file is always next to the sublime project file.
+			break
 
 		if self.full_path != "":
 			json_data = open(self.full_path).read()
@@ -57,6 +58,9 @@ class RapidSettings():
 
 	def getSettings(self):
 		return self.project_settings
+
+	def settingsFileExists(self):
+		return self.full_path != ""
 
 	def startupProjectExists(self):
 		if "StartupProject" in self.project_settings:
