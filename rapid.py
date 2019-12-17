@@ -340,6 +340,11 @@ class RapidConnect():
 
 		#rapid_exe = sublime.active_window().active_view().settings().get("RapidExe")
 		settings = RapidSettings().getSettings()
+		if not ("RapidExe" in settings):
+			# Rapid executable not set in settings
+			# Let's assume a process listening to the rapid port is already running
+			return
+			
 		rapid_exe = settings["RapidExe"]
 
 		if os.name == "nt":
