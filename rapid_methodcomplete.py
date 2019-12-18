@@ -24,14 +24,10 @@ from .rapid_functionstorage import Method
 from .rapid_functionstorage import FunctionDefinition
 
 class RapidCollector():
-	def __init__(self, folders, excluded_folders, included_folders):
-		self.folders = folders
-	
+	def __init__(self, folders):
+		self.folders = folders	
 		self.luaFuncPattern = re.compile('\s*function\s*')
 		self.cppFuncPattern = re.compile("///\s")
-
-		self.excluded_folders = excluded_folders
-		self.included_folders = included_folders
 
 	#Save all method signatures from all project folders
 	def save_method_signatures(self):
@@ -39,13 +35,20 @@ class RapidCollector():
 
 		settings = RapidSettings().getSettings()
 		cppFilePattern = None
+		excludedFolders = []
+		includedFolders = []
+
 		if "CppFilePattern" in settings:
 			cppFilePattern = re.compile(settings["CppFilePattern"])
+		if "ExcludedFolders" in settings:
+			excludedFolders = settings["ExcludedFolders"]
+		if "IncludedFolders" in settings:
+			includedFolders = settings["IncludedFolders"]
 
 		for folder in self.folders:
 			luafiles = []
 			cppfiles = []
-			self.get_files_in_project(folder, cppFilePattern, luafiles, cppfiles)
+			self.get_files_in_project(folder, cppFilePattern, excludedFolders, includedFolders, luafiles, cppfiles)
 
 			for file_name in luafiles:
 				functions = []
@@ -143,62 +146,62 @@ class RapidCollector():
 		RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 		RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
 
-	def get_files_in_project(self, folder, cppFilePattern, luaFileList, cppFileList):
+	def get_files_in_project(self, folder, cppFilePattern, excludedFolders, includedFolders, luaFileList, cppFileList):
 		for root, dirs, files in os.walk(folder, True):
 			# prune excluded folders from search
-			for excluded_folder in self.excluded_folders:
-				if excluded_folder in dirs:
-					#print("Pruning excluded folder " + excluded_folder)
-					dirs.remove(excluded_folder)
+			for excluded in excludedFolders:
+				if excluded in dirs:
+					#print("Pruning excluded folder " + excluded)
+					dirs.remove(excluded)
 
 			# prune everything not in included folders
-			if self.included_folders:
-				pruned_dirs = []
+			if includedFolders:
+				prunedDirs = []
 
 				for dir in dirs:
 					# split current dir at '/' into fragments
-					current_dir = os.path.join(root, dir).replace("\\", "/").split("/")
-					#print("current dir is ", current_dir)
+					currentDir = os.path.join(root, dir).replace("\\", "/").split("/")
+					#print("current dir is ", currentDir)
 
-					keep_dir = False
+					keepDir = False
 
-					for included_folder in self.included_folders:
-						included_folder = included_folder.split("/")
+					for included in includedFolders:
+						included = included.split("/")
 
-						current_pos = None
-						included_pos = 0
+						currentPos = None
+						includedPos = 0
 
 						# find start of included folder pattern in current dir
-						for i, val in enumerate(current_dir):
-							if included_folder[0] == val:
-								current_pos = i
+						for i, val in enumerate(currentDir):
+							if included[0] == val:
+								currentPos = i
 								break
 
-						prune_dir = False
+						pruneDir = False
 
-						if current_pos:
+						if currentPos:
 							while True:
-								if current_pos >= len(current_dir):
+								if currentPos >= len(currentDir):
 									# end of current dir reached
 									break
-								if included_pos >= len(included_folder):
+								if includedPos >= len(included):
 									# end of included folder pattern reached
 									break
-								if current_dir[current_pos] != included_folder[included_pos]:
-									prune_dir = True
+								if currentDir[currentPos] != included[includedPos]:
+									pruneDir = True
 									break
-								current_pos += 1
-								included_pos += 1
+								currentPos += 1
+								includedPos += 1
 						else:
-							prune_dir = True
+							pruneDir = True
 
-						if not prune_dir:
-							keep_dir = True
+						if not pruneDir:
+							keepDir = True
 
-					if not keep_dir:
-						pruned_dirs.append(dir)
+					if not keepDir:
+						prunedDirs.append(dir)
 
-				for dir in pruned_dirs:
+				for dir in prunedDirs:
 					#print("Pruning non-included dir ", dir)
 					dirs.remove(dir)
 
@@ -221,15 +224,7 @@ class RapidCollectorThread(threading.Thread):
 		threading.Thread.__init__(self)
 		self.timeout = timeout
 
-		excluded_folders = []
-		included_folders = []
-		settings = RapidSettings().getSettings()
-		if "ExcludedFolders" in settings:
-			excluded_folders = settings["ExcludedFolders"]
-		if "IncludedFolders" in settings:
-			included_folders = settings["IncludedFolders"]
-
-		self.collector = RapidCollector(folders, excluded_folders, included_folders)
+		self.collector = RapidCollector(folders)
 		self.collector.save_method_signatures()
 
 		#self.parse_now = False
