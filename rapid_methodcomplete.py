@@ -212,7 +212,7 @@ class RapidCollector():
 					luaFileList.append(full_path)
 					#add lua file path for static analyzer
 					RapidFunctionStorage.addLuaFile(full_path) 
-				if name.endswith(".cpp"):
+				if name.endswith(".cpp") or name.endswith(".h"):
 					if not cppFilePattern or cppFilePattern.match(name):
 						full_path = os.path.abspath(os.path.join(root, name))
 						cppFileList.append(full_path)
