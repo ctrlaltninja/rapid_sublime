@@ -162,10 +162,12 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			# find first previous non-empty row
 			while True:
 				start_row = current_row - index
+				if start_row < 0:
+					start_row = 0
 				start_pos = self.view.text_point(start_row, 0)
 				start_line = self.view.full_line(start_pos)
 				start_line_contents = self.view.substr(start_line)
-				if start_line_contents.strip() != '':
+				if start_row == 0 or start_line_contents.strip() != '':
 					break
 				else:
 					index = index + 1
@@ -225,9 +227,13 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 					#find start of the block
 					while True:
 						start_row = current_row - index
+						if start_row < 0:
+							start_row = 0
 						start_pos = self.view.text_point(start_row, 0)
 						start_line = self.view.full_line(start_pos)
 						start_line_contents = self.view.substr(start_line)
+						if start_row == 0:
+							break
 						if self.view.indentation_level(start_pos) == 0 \
 						and start_line_contents.strip() != '' \
 						and not start_line_contents.startswith("--"):
