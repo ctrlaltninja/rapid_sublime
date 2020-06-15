@@ -122,6 +122,7 @@ class RapidConnectionThread(threading.Thread):
 			RapidConnect()
 			RapidConnectionThread().start()
 
+
 class RapidResumeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		RapidConnectionThread.sendString("\nsys.resume()")
@@ -339,22 +340,22 @@ class RapidCheckServerAndStartupProjectCommand(sublime_plugin.WindowCommand):
 				RapidConnectionThread.sendString("\nsys.loadProject([[" + self.view.file_name() + "]])")
 
 
+# TODO rename to RapidLaunch or something; this launches the server executable. If RapidExe has not been defined
+# in the rapid project, this just loads settings.
 class RapidConnect():
 	def __init__(self):
 	
-		#print("rapidconnect")
-
-		#rapid_exe = sublime.active_window().active_view().settings().get("RapidExe")
 		settings = RapidSettings().getSettings()
 		if not ("RapidExe" in settings):
 			# Rapid executable not set in settings
-			# Let's assume a process listening to the rapid port is already running
+			# Assume a process listening to the rapid port is already running
 			return
-			
+
 		rapid_exe = settings["RapidExe"]
 
+		# An executable has been defined in config settings; check if the executable is already running and exit
+		# the function if so
 		if os.name == "nt":
-			# check if rapid is already running	
 			rapid_running = True
 			rapid = subprocess.check_output("tasklist /FI \"IMAGENAME eq " + rapid_exe + ".exe\" /FO CSV")
 			rapid_search = re.search(rapid_exe + ".exe", rapid.decode("ISO-8859-1"))
@@ -378,9 +379,11 @@ class RapidConnect():
 			if rapid_running:
 				return
 
+		# We got this far -> the exe is not running
 		if "Host" in settings and settings["Host"] != "localhost":
 			return
 
+		# Figure out a path for the executable
 		if os.name == "nt":
 			rapid_path = settings["RapidPathWin"]
 		elif os.name == "posix":
@@ -390,6 +393,7 @@ class RapidConnect():
 			RapidOutputView.printMessage("Could not find \"RapidPath<OS>\" variable from projects' rapid_sublime -file!")
 			return
 
+		# Start the executable
 		if rapid_path != None and rapid_exe != None:
 			RapidOutputView.printMessage("Starting " + rapid_exe)
 			full_path = os.path.abspath(os.path.join(rapid_path, rapid_exe))
