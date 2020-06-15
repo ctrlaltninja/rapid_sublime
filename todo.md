@@ -1,8 +1,6 @@
 Bugs
 ----
 
-- collects function signatures twice at startup
-
 - pressing f1 on this line crashes:
 	static int shb_create_engine_systems(lua_State* L)
 

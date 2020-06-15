@@ -67,6 +67,12 @@ class RapidSettings():
 			return True
 		return False
 
+	def isAutoConnectEnabled(self):
+		if "AutoConnect" in self.project_settings and (self.project_settings["AutoConnect"] == True or self.project_settings["AutoConnect"] == "true"):
+			return True
+		else:
+			return False
+
 	def getStartupProjectPath(self):
 		return self.sublime_project_path
 

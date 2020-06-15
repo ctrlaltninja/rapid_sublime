@@ -19,9 +19,10 @@ class RapidConnectionThread(threading.Thread):
 	def __init__(self):
 		self.host = "localhost"
 
-		settings = RapidSettings().getSettings()
-		if "Host" in settings:
-			self.host = settings["Host"]
+		settings = RapidSettings()
+		values = settings.getSettings()
+		if "Host" in values:
+			self.host = values["Host"]
 
 		self.port = 4444
 		self.sock = None
@@ -30,6 +31,9 @@ class RapidConnectionThread(threading.Thread):
 		self.connectionFailureReported = False
 		self.shouldExit = False
 		self.reconnect_interval_in_seconds = 1.0
+
+		if not settings.isAutoConnectEnabled():
+			self.connect()
 
 		threading.Thread.__init__(self)
 		RapidConnectionThread.instance = self
