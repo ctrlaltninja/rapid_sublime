@@ -18,6 +18,7 @@ class RapidConnectionThread(threading.Thread):
 	
 	def __init__(self):
 		self.host = "localhost"
+
 		settings = RapidSettings().getSettings()
 		if "Host" in settings:
 			self.host = settings["Host"]
@@ -25,27 +26,49 @@ class RapidConnectionThread(threading.Thread):
 		self.port = 4444
 		self.sock = None
 		self.running = False
+		self.connected = False
+		self.connectionFailureReported = False
+		self.shouldExit = False
+		self.reconnect_interval_in_seconds = 1.0
+
+		threading.Thread.__init__(self)
+		RapidConnectionThread.instance = self
+
+	def connect(self):
+		if self.connected:
+			return
 
 		try:
-			threading.Thread.__init__(self)
 			self.sock = socket.create_connection((self.host, self.port))
-			#RapidOutputView.printMessage("Connected to " + self.host + ".")
-			RapidConnectionThread.instance = self
-		except OSError as e:
-			RapidOutputView.printMessage("Failed to connect to rapid server:\n" + str(e) + "\n")
+			RapidOutputView.printMessage("Connected to server at %s:%d." % (self.host, self.port))
+			self.connected = True
 
+			# re-enable error messages if they happen to be suppressed
+			self.connectionFailureReported = False
+		except OSError as e:
+			self.connected = False
+			if not self.connectionFailureReported:
+				RapidOutputView.printMessage("Failed to connect to server:\n" + str(e) + "\n")
+				# Suppress further print-outs
+				self.connectionFailureReported = True
 
 	def run(self):
 		self.running = True
 
-		try:
-			self.readFromSocket()
-		finally:
-			self.sock.close()
-			self.running = False
-			del self.sock
-			RapidOutputView.printMessage("Connection terminated")
+		while not self.shouldExit:
+			if not self.connected:
+				self.connect()
+				time.sleep(self.reconnect_interval_in_seconds)
+			else:
+				try:
+					self.readFromSocket()
+				finally:
+					self.sock.close()
+					self.connected = False
+					del self.sock
+					RapidOutputView.printMessage("Connection terminated")
 
+		self.running = False
 
 	def readFromSocket(self):
 		dataQueue = []
@@ -111,17 +134,30 @@ class RapidConnectionThread(threading.Thread):
 		RapidConnectionThread.checkConnection()
 		RapidConnectionThread.instance._sendString(msg + '\000')
 
-
 	@staticmethod
 	def checkConnection():
-		if RapidConnectionThread.instance == None:
+		instance = RapidConnectionThread.instance
+
+		if instance == None:
 			RapidConnect()
 			RapidConnectionThread().start()
-		elif not RapidConnectionThread.instance.isRunning():
-			RapidConnectionThread.instance.join()
+		elif not instance.running:
+			# JS: when do we actually end up here?
+			instance.join()
 			RapidConnect()
 			RapidConnectionThread().start()
 
+	def killConnection():
+		instance = RapidConnectionThread.instance
+		RapidConnectionThread.instance = None
+
+		if instance == None or not instance.running:
+			return
+
+		instance.shouldExit = True
+
+		# closing the socket aborts the thread
+		instance.sock.close()
 
 class RapidResumeCommand(sublime_plugin.TextCommand):
 	def run(self, edit):

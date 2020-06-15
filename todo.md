@@ -1,6 +1,8 @@
 Bugs
 ----
 
+- collects function signatures twice at startup
+
 - pressing f1 on this line crashes:
 	static int shb_create_engine_systems(lua_State* L)
 
@@ -11,6 +13,8 @@ Bugs
 
 - Mouse folding does not work like alt+f 
 	- Not possible at the moment, this is a ST3 limitation?
+
+- when making modifications to only rapid.py, Sublime does not trigger plugin_(un)loaded callbacks from rapid_load.py
 
 TODO
 ----
