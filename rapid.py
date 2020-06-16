@@ -19,8 +19,8 @@ class RapidConnectionThread(threading.Thread):
 	def __init__(self):
 		self.host = "localhost"
 
-		settings = RapidSettings()
-		values = settings.getSettings()
+		self.settings = RapidSettings()
+		values = self.settings.getSettings()
 		if "Host" in values:
 			self.host = values["Host"]
 
@@ -30,10 +30,7 @@ class RapidConnectionThread(threading.Thread):
 		self.connected = False
 		self.connectionFailureReported = False
 		self.shouldExit = False
-		self.reconnect_interval_in_seconds = 1.0
-
-		if not settings.isAutoConnectEnabled():
-			self.connect()
+		self.reconnectIntervalInSeconds = 1.0
 
 		threading.Thread.__init__(self)
 		RapidConnectionThread.instance = self
@@ -43,6 +40,7 @@ class RapidConnectionThread(threading.Thread):
 			return
 
 		try:
+			print("Rapid: connecting at %d..." % time.time())
 			self.sock = socket.create_connection((self.host, self.port))
 			RapidOutputView.printMessage("Connected to server at %s:%d." % (self.host, self.port))
 			self.connected = True
@@ -62,7 +60,12 @@ class RapidConnectionThread(threading.Thread):
 		while not self.shouldExit:
 			if not self.connected:
 				self.connect()
-				time.sleep(self.reconnect_interval_in_seconds)
+
+				if not self.connected:
+					if self.settings.isAutoConnectEnabled():
+						time.sleep(self.reconnectIntervalInSeconds)
+					else:
+						break
 			else:
 				try:
 					self.readFromSocket()
@@ -71,6 +74,11 @@ class RapidConnectionThread(threading.Thread):
 					self.connected = False
 					del self.sock
 					RapidOutputView.printMessage("Connection terminated")
+
+					# Suppress connection errors from now on; this was deemed confusing. We did already report about the
+					# connection error, didn't we? AutoConnect option makes no difference here, because regardless of
+					# the value, when sending a message to the server, the suppression is removed.
+					self.connectionFailureReported = True
 
 		self.running = False
 
@@ -136,7 +144,11 @@ class RapidConnectionThread(threading.Thread):
 	@staticmethod
 	def sendString(msg):
 		RapidConnectionThread.checkConnection()
-		RapidConnectionThread.instance._sendString(msg + '\000')
+		# Enable failure reporting here; we want feedback when explicitly sending messages to the server
+		RapidConnectionThread.instance.connectionFailureReported = False
+
+		if RapidConnectionThread.instance.connected:
+			RapidConnectionThread.instance._sendString(msg + '\000')
 
 	@staticmethod
 	def checkConnection():
@@ -151,6 +163,7 @@ class RapidConnectionThread(threading.Thread):
 			RapidConnect()
 			RapidConnectionThread().start()
 
+	@staticmethod
 	def killConnection():
 		instance = RapidConnectionThread.instance
 		RapidConnectionThread.instance = None
