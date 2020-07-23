@@ -61,6 +61,8 @@ class RapidCollector():
 						findFunctions.append(FunctionDefinition(matches.group(0)))
 				RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 				RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
+				print("Parsed: %s (%d functions)" % (file_name, len(functions)))
+				# print(functions)
 		
 			for file_name in cppfiles:
 				functions = []
@@ -108,11 +110,13 @@ class RapidCollector():
 							if name:
 								if signature == None:
 									signature = ""
-								functions.append(Method(name, signature, ""))
+								functions.append(Method(name, signature, file_name))
 								findFunctions.append(FunctionDefinition(line))
 
-						RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
-						RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
+				RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
+				RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
+				print("Parsed: %s (%d functions)" % (file_name, len(functions)))
+				# print(functions)
 
 	def findLua(self, filepath):
 		function_list = []

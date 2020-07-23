@@ -10,6 +10,9 @@ class Method:
 		self._signature = signature
 		self._filename = filename
 
+	def __repr__(self):
+		return "Method(_filename: '%s', _name: '%s', _signature: '%s')" % (self._filename, self._name, self._signature)
+
 	#function name
 	def name(self):
 		return self._name
