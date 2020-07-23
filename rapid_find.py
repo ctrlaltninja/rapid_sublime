@@ -96,8 +96,8 @@ def _find_impl(command, edit, full):
 
 		 # description
 		if full and match[1]:
-			# TODO go through /// and remove extra line breaks -> this works nicer
-			RapidOutputView.printMessage("\t" + match[1] + "\n")
+			# replace line breaks with line break + tab to add simple indentation
+			RapidOutputView.printMessage("\t" + match[1].replace("\n", "\n\t") + "\n\n")
 
 	if found:
 		RapidOutputView.printMessage("\n")
