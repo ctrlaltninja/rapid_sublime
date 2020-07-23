@@ -10,7 +10,7 @@ class TestRapidCollector_FullProject(TestCase):
         RapidFunctionStorage.clear()
 
     def test_save_method_signatures_creates_functions_for_find(self):
-        target = RapidCollector([self.project], [])
+        target = RapidCollector([self.project])
 
         target.save_method_signatures()
 
@@ -25,6 +25,7 @@ class TestRapidCollector_FullProject(TestCase):
             'function tbl:foo()',
             'function tbl.bar()',
             '/// foo1(x)',
+            '/// function_from_header()',
             '/// r1, r2, r3, r4 = multiple_returns(cbuffer, index)',
             '/// baz,boz = foobar(x, y)',
             '/// Foo.bar(x, y)',
@@ -37,14 +38,18 @@ class TestRapidCollector_FullProject(TestCase):
         self.assertEqual(expected, results)
 
     def test_get_files_in_project(self):
-        target = RapidCollector([self.project], [])
+        target = RapidCollector([self.project])
 
         luaFiles = []
         cppFiles = []
 
-        files = target.get_files_in_project(self.project, luaFiles, cppFiles)
+        cppFilePattern = None
+        excludedFolders = []
+        includedFolders = None
+
+        files = target.get_files_in_project(self.project, cppFilePattern, excludedFolders, includedFolders, luaFiles, cppFiles)
 
         self.assertEqual(2, len(luaFiles))
 
-        # .h files are not included in the search, so only one result:
-        self.assertEqual(1, len(cppFiles))
+        # .h files are included in the search, so two results:
+        self.assertEqual(2, len(cppFiles))

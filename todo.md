@@ -12,7 +12,7 @@ Bugs
 - Mouse folding does not work like alt+f 
 	- Not possible at the moment, this is a ST3 limitation?
 
-- when making modifications to only rapid.py, Sublime does not trigger plugin_(un)loaded callbacks from rapid_load.py
+- when making modifications to only rapid.py, Sublime does not trigger plugin_(un)loaded callbacks from rapid_load.py.cpp
 
 TODO
 ----

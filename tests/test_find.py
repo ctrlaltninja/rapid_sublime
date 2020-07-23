@@ -10,7 +10,7 @@ class TestFind(TestCase):
         # collect method signatures to cache
         RapidFunctionStorage.clear()
         project = os.path.join(os.path.dirname(__file__), "project")
-        collector = RapidCollector([project], [])
+        collector = RapidCollector([project])
         collector.save_method_signatures()
 
     def test_basic_pattern(self):
