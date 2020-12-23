@@ -35,6 +35,11 @@ class RapidConnectionThread(threading.Thread):
 		threading.Thread.__init__(self)
 		RapidConnectionThread.instance = self
 
+		# If 'autoConnect' is True we try to connect to server repeatedly
+		# If' autoConnect' is False, we assume we have successfully launched server executable ourselves and attempt to connect only once
+		if not self.settings.isAutoConnectEnabled():
+			self.connect()
+
 	def connect(self):
 		if self.connected:
 			return
@@ -57,28 +62,35 @@ class RapidConnectionThread(threading.Thread):
 	def run(self):
 		self.running = True
 
-		while not self.shouldExit:
-			if not self.connected:
-				self.connect()
-
+		if self.settings.isAutoConnectEnabled():
+			# Auto-connect on
+			while not self.shouldExit:
 				if not self.connected:
-					if self.settings.isAutoConnectEnabled():
+					self.connect()
+					if not self.connected:
 						time.sleep(self.reconnectIntervalInSeconds)
-					else:
-						break
-			else:
-				try:
-					self.readFromSocket()
-				finally:
-					self.sock.close()
-					self.connected = False
-					del self.sock
-					RapidOutputView.printMessage("Connection terminated")
+				else:
+					try:
+						self.readFromSocket()
+					finally:
+						self.sock.close()
+						self.connected = False
+						del self.sock
+						RapidOutputView.printMessage("Connection terminated")
 
-					# Suppress connection errors from now on; this was deemed confusing. We did already report about the
-					# connection error, didn't we? AutoConnect option makes no difference here, because regardless of
-					# the value, when sending a message to the server, the suppression is removed.
-					self.connectionFailureReported = True
+						# Suppress connection errors from now on; this was deemed confusing. We did already report about the
+						# connection error, didn't we? AutoConnect option makes no difference here, because regardless of
+						# the value, when sending a message to the server, the suppression is removed.
+						self.connectionFailureReported = True
+		else:
+			# Auto-connect off
+			try:
+				self.readFromSocket()
+			finally:
+				self.sock.close()
+				self.running = False
+				del self.sock
+				RapidOutputView.printMessage("Connection terminated")
 
 		self.running = False
 
@@ -149,6 +161,8 @@ class RapidConnectionThread(threading.Thread):
 
 		if RapidConnectionThread.instance.connected:
 			RapidConnectionThread.instance._sendString(msg + '\000')
+		else:
+			print("sendString failed - not connected!")
 
 	@staticmethod
 	def checkConnection():
@@ -418,7 +432,7 @@ class RapidConnect():
 				if rapid_debug_search == None:
 					rapid_running = False
 			if rapid_running:
-				return	
+				return
 		elif os.name == "posix":
 			data = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE).stdout.readlines() 
 			rapid_running = False
@@ -433,7 +447,7 @@ class RapidConnect():
 				return
 
 		# We got this far -> the exe is not running
-		if "Host" in settings and settings["Host"] != "localhost":
+		if "Host" in settings and settings["Host"] != "localhost" and settings["Host"] != "127.0.0.1":
 			return
 
 		# Figure out a path for the executable
