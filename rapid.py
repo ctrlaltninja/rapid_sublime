@@ -452,7 +452,8 @@ class RapidConnect():
 
 		# Figure out a path for the executable
 		if os.name == "nt":
-			rapid_path = settings["RapidPathWin"]
+			os.chdir(RapidSettings().getStartupProjectPath()) 
+			rapid_path = os.path.realpath(settings["RapidPathWin"])
 		elif os.name == "posix":
 			os.chdir(RapidSettings().getStartupProjectPath()) 
 			rapid_path = os.path.realpath(settings["RapidPathOSX"])
