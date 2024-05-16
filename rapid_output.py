@@ -103,9 +103,13 @@ class RapidOutputViewClearCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		view = RapidOutputView.getOutputView(True)
 		if view != None:
+			window = sublime.active_window()
+			activeView = window.active_view()
 			view.set_read_only(False)
-			view.erase(edit, sublime.Region(0, view.size()))
+			view.run_command("select_all")
+			view.run_command("right_delete")
 			view.set_read_only(True)
+			window.focus_view(activeView)
 
 class RapidDoubleClick(sublime_plugin.WindowCommand):
 	def run(self):
