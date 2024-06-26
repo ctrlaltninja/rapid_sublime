@@ -92,7 +92,12 @@ def _find_impl(command, edit, full):
 		found = True
 
 		# signature
-		RapidOutputView.printMessage(match[0] + "\n") 
+		signature = match[0]
+		if not full:
+			# strip types from function argument list in short mode, for example:
+			# "foo(x: number, y: number | string, z: boolean?)" -> "foo(x, y, z?)"
+			signature = re.sub(":[\sa-zA-Z0-9_|]*?(\??)([,\)])", "\g<1>\g<2>", signature)
+		RapidOutputView.printMessage(signature + "\n") 
 
 		 # description
 		if full and match[1]:
