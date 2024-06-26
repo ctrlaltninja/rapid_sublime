@@ -76,36 +76,24 @@ class RapidCollector():
 							name = None
 							signature = None
 
-							# match global functions without return values, e.g. "/// foobar(x, y)"
+							# match global functions, e.g. "/// foobar(x, y)"
 							matches = re.match('///\s*(\w+)[\({](.*)[\)}]', line)
 							if matches != None:
 								name = matches.group(1)
 								signature = matches.group(2)
 							else:
-								# match global functions with return values, e.g. "/// baz,boz = foobar(x, y)"
-								matches = re.match('///\s*(?:[,\w\s]|\.\.\.)+\s*=\s*(\w+)[\({](.*)[\)}]', line)
+								# match functions in modules, e.g. "/// Foo.bar(x, y)"
+								matches = re.match('///\s*\w+[:\.](\w+)[\({](.*)[\)}]', line)
 								if matches != None:
 									name = matches.group(1)
 									signature = matches.group(2)
-								else:
-									# match functions without return values, e.g. "/// Foo.bar(x, y)"
-									matches = re.match('///\s*\w+[:\.](\w+)[\({](.*)[\)}]', line)
-									if matches != None:
-										name = matches.group(1)
-										signature = matches.group(2)
-									else:
-										# match functions with return values, e.g. "/// baz,boz = Foo.bar(x, y)"
-										matches = re.match('///\s*[,\w]+\s*=\s*\w+[:\.](\w+)[\({](.*)[\)}]', line)
-										if matches != None:
-											name = matches.group(1)
-											signature = matches.group(2)
-										elif len(findFunctions) > 0:
-											# match description, e.g. "/// blabla"
-											matches = re.match('///\s*(.*)', line)
-											if matches:
-												description = matches.group(1)
-												#print("DESC: " + description)
-												findFunctions[-1].addDescription(description)
+								elif len(findFunctions) > 0:
+									# match description, e.g. "/// blabla"
+									matches = re.match('///\s*(.*)', line)
+									if matches:
+										description = matches.group(1)
+										#print("DESC: " + description)
+										findFunctions[-1].addDescription(description)
 
 							if name:
 								if signature == None:
