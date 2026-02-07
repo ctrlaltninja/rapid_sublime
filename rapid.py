@@ -471,7 +471,7 @@ class RapidConnect():
 
 	def isProcessRunning(self, process_name):
 		proc = subprocess.Popen(
-				'tasklist /FI "IMAGENAME eq "' + process_name + '" /FO CSV /NH',
+				'tasklist /FI "IMAGENAME eq ' + process_name + '" /FO CSV /NH',
 				stdout = subprocess.PIPE,
 				stderr = subprocess.PIPE,
 				shell = True
