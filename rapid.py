@@ -423,15 +423,12 @@ class RapidConnect():
 		# An executable has been defined in config settings; check if the executable is already running and exit
 		# the function if so
 		if os.name == "nt":
-			rapid_running = True
-			rapid = subprocess.check_output("tasklist /FI \"IMAGENAME eq " + rapid_exe + ".exe\" /FO CSV")
-			rapid_search = re.search(rapid_exe + ".exe", rapid.decode("ISO-8859-1"))
-			if rapid_search == None:
-				rapid_debug = subprocess.check_output("tasklist /FI \"IMAGENAME eq " + rapid_exe + "_d.exe\" /FO CSV")
-				rapid_debug_search = re.search(rapid_exe + "_d.exe", rapid_debug.decode("ISO-8859-1"))
-				if rapid_debug_search == None:
-					rapid_running = False
-			if rapid_running:
+			rapid_running = False
+			if self.isProcessRunning(rapid_exe + ".exe"):
+				rapid_running = True
+				return
+			if self.isProcessRunning(rapid_exe + "_d.exe"):
+				rapid_running = True
 				return
 		elif os.name == "posix":
 			data = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE).stdout.readlines() 
@@ -471,6 +468,16 @@ class RapidConnect():
 		else:
 			RapidOutputView.printMessage("Could not start server executable!")
 			RapidOutputView.printMessage("\"RapidPath<OS>\" and/or \"RapidExe\" variables not found from \"Preferences.sublime_settings\" file!")
+
+	def isProcessRunning(self, process_name):
+		proc = subprocess.Popen(
+				'tasklist /FI "IMAGENAME eq "' + process_name + '" /FO CSV /NH',
+				stdout = subprocess.PIPE,
+				stderr = subprocess.PIPE,
+				shell = True
+			)
+		result, _ = proc.communicate()
+		return process_name.encode() in result
 
 
 class RapidTestCommand(sublime_plugin.TextCommand):
