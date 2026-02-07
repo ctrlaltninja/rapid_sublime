@@ -4,7 +4,7 @@
     { "keys": ["ctrl+f5"], "command": "rapid_debug_run" },
     { "keys": ["alt+a"], "command": "rapid_toggle_tailing" },
     { "keys": ["alt+f"], "command": "rapid_fold_unfold", "args": {"add_empty_lines": false} },
-    { "keys": ["alt+o"], "command": "rapid_unfold_all" },
+    //{ "keys": ["alt+o"], "command": "rapid_unfold_all" },
     { "keys": ["alt+c"], "command": "rapid_fold_all", "args": {"add_empty_lines": false}, "context": 
         [
             { "key": "setting.is_widget", "operator": "equal", "operand": false }
