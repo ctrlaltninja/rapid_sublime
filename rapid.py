@@ -17,7 +17,8 @@ class RapidConnectionThread(threading.Thread):
 	instance = None
 	
 	def __init__(self):
-		self.host = "localhost"
+		# This is a lot faster than "localhost" on Windows
+		self.host = "127.0.0.1"
 
 		self.settings = RapidSettings()
 		values = self.settings.getSettings()

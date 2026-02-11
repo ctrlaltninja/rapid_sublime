@@ -1,9 +1,6 @@
 Bugs
 ----
 
-- When f5 is pressed for the first time and rapid executable is not running, the plugin freezes for several seconds
-    - Does not happen again until Sublime is restart or plugin is reloaded
-
 - pressing f1 on this line crashes:
 	static int shb_create_engine_systems(lua_State* L)
 
