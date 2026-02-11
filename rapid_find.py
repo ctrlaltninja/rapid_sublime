@@ -21,7 +21,6 @@ def find(pattern, callsite=False):
 		final_pattern = '[\s\.]%s[\({].*[\)}]' % pattern
 	else:
 		final_pattern = '.*%s.*[\({].*[\)}]' % pattern
-	# print(final_pattern)
 
 	functions = RapidFunctionStorage.getFindFunctions()
 	if len(functions) == 0:
@@ -64,11 +63,12 @@ def _find_impl(command, edit, full):
 
 	region = command.view.word(cursor_pos)
 	pattern = command.view.substr(region)
-	#print("Pattern is: " + pattern)
-	#RapidOutputView.printMessage("Pattern is: " + pattern)
+
+	# Remove any symbols such as parens and asterisks
+	pattern = re.sub(r'[^a-zA-Z0-9_]', '', pattern)
 
 	if len(pattern) == 0:
-		RapidOutputView.printMessage("Find: empty search patterns are no good.")
+		RapidOutputView.printMessage("Find: no matches")
 		return
 
 	# Check left and right from the pattern word: if there is a dot or

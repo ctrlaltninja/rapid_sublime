@@ -1,9 +1,6 @@
 Bugs
 ----
 
-- pressing f1 on this line crashes:
-	static int shb_create_engine_systems(lua_State* L)
-
 - Create new (lua) function with only one indented line -> no folding marker appears
 
 - Create new (lua) function with two or more indeted lines -> folding marker appears, but cursor is thrown in the beginning of the document
