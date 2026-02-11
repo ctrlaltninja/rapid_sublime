@@ -169,12 +169,12 @@ class RapidConnectionThread(threading.Thread):
 		instance = RapidConnectionThread.instance
 
 		if instance == None:
-			RapidConnect()
+			RapidStartExecutable()
 			RapidConnectionThread().start()
 		elif not instance.running:
 			# JS: when do we actually end up here?
 			instance.join()
-			RapidConnect()
+			RapidStartExecutable()
 			RapidConnectionThread().start()
 
 	@staticmethod
@@ -368,106 +368,93 @@ class RapidEvalCommand(sublime_plugin.TextCommand):
 			return line_contents
 
 
-class RapidCheckServerAndStartupProjectCommand(sublime_plugin.WindowCommand):
+# Starts the project or runs the current file if rapid project file does not exist.
+class RapidRunProjectOrFile(sublime_plugin.WindowCommand):
 	def run(self):
 		self.view = self.window.active_view()
 		self.view.run_command('rapid_output_view_clear')
 
-		#Check if startup project exists and if it has been modified
-		startup_exists = False
-		is_modified = False
-
 		#RapidOutputView.printMessage("Loading project settings...")
 		startup_path = RapidSettings().getStartupFilePath()
-		RapidOutputView.printMessage("Startup path: " + startup_path)
+		#RapidOutputView.printMessage("Startup path: " + startup_path)
+
+		RapidStartExecutable()
 
 		if startup_path:
-			startup_exists = True
-			new_view = sublime.active_window().find_open_file(startup_path)
-			if new_view != None and new_view.is_dirty():
-				is_modified = True
-		elif self.view.is_dirty():
-			is_modified = True
-
-		#Send commands to server accordingly
-		if startup_exists:
-			#always load project, even if it is open and modified (modifications are loaded only after saving)
-			RapidOutputView.printMessage("Startup project: " + startup_path)
+			# Run project
+			RapidOutputView.printMessage("Run project: " + startup_path)
 			line = "\nsys.loadProject([[" + startup_path + "]])"
 			RapidConnectionThread.sendString(line)
 		else:
-			#if no startup project, run current page
-			if is_modified:
-				#file has not been saved - restart runtime engine and send code over
-				RapidConnectionThread.sendString("\nsys.restart()")
-				line = "@" + self.view.file_name() + ":1\n" + self.view.substr(sublime.Region(0, self.view.size()))
-				RapidConnectionThread.sendString(line)
+			# Run file
+			file = self.view.file_name()
+			ext = os.path.splitext(file)[1]
+			if self.view.is_dirty():
+				RapidOutputView.printMessage("Cannot run current file because the file has changes.")
+			elif ext != ".lua":
+				RapidOutputView.printMessage("Cannot run current file because the file does not have .lua extension.")
 			else:
-				#file is up to date -> reload file - this is faster than sending the code
-				RapidConnectionThread.sendString("\nsys.loadProject([[" + self.view.file_name() + "]])")
+				RapidOutputView.printMessage("Run file: " + file)
+				RapidConnectionThread.sendString("\nsys.loadProject([[" + file + "]])")
 
 
-# TODO rename to RapidLaunch or something; this launches the server executable. If RapidExe has not been defined
-# in the rapid project, this just loads settings.
-class RapidConnect():
+# Starts the rapid executable if it's not already running.
+class RapidStartExecutable():
 	def __init__(self):
-	
+		rapid_path = None # Location of the rapid executable
+		rapid_name = None # Executable name without extension (e.g. "rapid")
+
+		# Find rapid executable from project file
 		settings = RapidSettings().getSettings()
-		if not ("RapidExe" in settings):
-			# Rapid executable not set in settings
-			# Assume a process listening to the rapid port is already running
+		if "RapidExe" in settings:
+			rapid_name = settings["RapidExe"]
+		if os.name == "nt":
+			if "RapidPathWin" in settings:
+				os.chdir(RapidSettings().getStartupProjectPath()) 
+				rapid_path = os.path.realpath(settings["RapidPathWin"])
+		elif os.name == "posix":
+			if "RapidPathOSX" in settings:
+				os.chdir(RapidSettings().getStartupProjectPath()) 
+				rapid_path = os.path.realpath(settings["RapidPathOSX"])
+
+		# Fall back to plugin settings if not found
+		if not rapid_path or not rapid_name:
+			plugin_settings = sublime.load_settings("Rapid.sublime-settings")
+			rapid_executable_path = plugin_settings.get("rapid_executable")
+			if rapid_executable_path:
+				rapid_path = os.path.dirname(rapid_executable_path)
+				rapid_name = os.path.splitext(os.path.basename(rapid_executable_path))[0]
+
+		if not rapid_path or not rapid_name:
+			RapidOutputView.printMessage("Could not find rapid executable in plugin settings or project file!")
 			return
 
-		rapid_exe = settings["RapidExe"]
+		#RapidOutputView.printMessage("rapid_path:" + str(rapid_path))
+		#RapidOutputView.printMessage("rapid_name:" + str(rapid_name))
 
-		# An executable has been defined in config settings; check if the executable is already running and exit
-		# the function if so
+		# Check if the executable is already running and exit if so
 		if os.name == "nt":
-			rapid_running = False
-			if self.isProcessRunning(rapid_exe + ".exe"):
-				rapid_running = True
-				return
-			if self.isProcessRunning(rapid_exe + "_d.exe"):
-				rapid_running = True
+			if self.isProcessRunning(rapid_name + ".exe") or self.isProcessRunning(rapid_name + "_d.exe"):
+				#RapidOutputView.printMessage("Rapid executable is running")
 				return
 		elif os.name == "posix":
 			data = subprocess.Popen(['ps','aux'], stdout=subprocess.PIPE).stdout.readlines() 
-			rapid_running = False
 			for line in data:
 				lineStr = line.decode("utf-8")
-				if lineStr.find(rapid_exe) > -1 and lineStr.find(os.getlogin()) > -1:
-					print("Rapid executable is already running for user: " + os.getlogin())
-					print(lineStr)
-					rapid_running = True
-					break
-			if rapid_running:
-				return
+				if lineStr.find(rapid_name) > -1 and lineStr.find(os.getlogin()) > -1:
+					#RapidOutputView.printMessage("Rapid executable is running")
+					return
 
-		# We got this far -> the exe is not running
+		# Do not attempt to run the executable if the server is not running on the host PC
 		if "Host" in settings and settings["Host"] != "localhost" and settings["Host"] != "127.0.0.1":
 			return
 
-		# Figure out a path for the executable
-		if os.name == "nt":
-			os.chdir(RapidSettings().getStartupProjectPath()) 
-			rapid_path = os.path.realpath(settings["RapidPathWin"])
-		elif os.name == "posix":
-			os.chdir(RapidSettings().getStartupProjectPath()) 
-			rapid_path = os.path.realpath(settings["RapidPathOSX"])
-		else:
-			RapidOutputView.printMessage("Could not find \"RapidPath<OS>\" variable from projects' rapid_sublime -file!")
-			return
-
 		# Start the executable
-		if rapid_path != None and rapid_exe != None:
-			RapidOutputView.printMessage("Starting " + rapid_exe)
-			full_path = os.path.abspath(os.path.join(rapid_path, rapid_exe))
-			subprocess.Popen(full_path, cwd=rapid_path)
-			if os.name == "posix":
-				time.sleep(0.5) #small delay to get server running on OSX
-		else:
-			RapidOutputView.printMessage("Could not start server executable!")
-			RapidOutputView.printMessage("\"RapidPath<OS>\" and/or \"RapidExe\" variables not found from \"Preferences.sublime_settings\" file!")
+		#RapidOutputView.printMessage("Starting " + rapid_name)
+		full_path = os.path.abspath(os.path.join(rapid_path, rapid_name))
+		subprocess.Popen(full_path, cwd = rapid_path)
+		if os.name == "posix":
+			time.sleep(0.5) # Small delay to get server running on OSX
 
 	def isProcessRunning(self, process_name):
 		proc = subprocess.Popen(

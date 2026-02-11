@@ -16,12 +16,13 @@
                         "children":
                         [
                             {
-                                "command": "open_file", "args":
+                                "command": "edit_settings",
+                                "args":
                                 {
-                                    "file": "${packages}/rapid_sublime/Preferences.sublime-settings"
+                                    "base_file": "${packages}/rapid_sublime/Rapid.sublime-settings",
+                                    "default": "{\n\t$0\n}\n"
                                 },
-                                "caption": "Preferences – Default"
-                            },
+                                "caption": "Settings"                            },
                             {
                                 "command": "open_file", "args":
                                 {

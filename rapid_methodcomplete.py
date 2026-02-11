@@ -274,12 +274,7 @@ class RapidStartCollectorCommand(sublime_plugin.TextCommand):
 		print("Collecting function definitions for autocomplete...")
 		startTime = time.time()
 
-		settingsInstance = RapidSettings()
-		if not settingsInstance.settingsFileExists():
-			print("Rapid project file not found -- skipping!")
-			return
-
-		settings = settingsInstance.getSettings()
+		settings = RapidSettings().getSettings()
 
 		if "ParseAutoCompleteOnSave" in settings:
 			RapidCollectorListener.parseAutoComplete = settings["ParseAutoCompleteOnSave"]
