@@ -13,29 +13,45 @@ CURRENT_REGION_ICON = "Packages/rapid_sublime/icons/current_line.png"
 def open_file_location(file_name, row):
 	window_found = sublime.active_window()
 	path = None
-
-	# scan all opened folders of *all* windows
-	# we need scan other windows, because the rapid output view
-	# can be detached from the window, where the project is loaded
+	
+	# Check first if the file is already open in any view
 	for window in sublime.windows():
-		for folder in window.folders():
-			candidate = os.path.join(folder, file_name)
-			if os.path.isfile(candidate):
+		for view in window.views():
+			view_file_name = view.file_name()
+			if view_file_name and os.path.basename(view_file_name) == file_name:
 				window_found = window
-				path = candidate
+				path = view_file_name
 				break
 
+	# Check if the file exist at the root of a project folder
 	if path == None:
-		# exact match was not found. Try recursing the subdirectories of folders opened in Sublime
 		for window in sublime.windows():
 			for folder in window.folders():
-				for root, subfolders, files in os.walk(folder):
-					for subfolder in subfolders:
-						candidate = os.path.join(root, subfolder, file_name)
-						if os.path.isfile(candidate):
-							window_found = window
-							path = candidate
-							break
+				candidate = os.path.join(folder, file_name)
+				if os.path.isfile(candidate):
+					window_found = window
+					path = candidate
+					break
+
+	# As a last resort do a (slow) recursive search in all folders
+	if path == None:
+		for window in sublime.windows():
+			for folder in window.folders():
+				# Use os.walk with topdown=True for early termination
+				for root, subfolders, files in os.walk(folder, topdown=True):
+					# Check if file exists in current directory's files list first
+					if file_name in files:
+						candidate = os.path.join(root, file_name)
+						window_found = window
+						path = candidate
+						break
+					
+					# Filter out "build" directory
+					subfolders[:] = [d for d in subfolders if not d.startswith('.') and d not in {'build'}]
+				if path:  # Break out of folder loop
+					break
+			if path:  # Break out of window loop
+				break
 
 	if path != None:
 		view = window_found.find_open_file(path)
