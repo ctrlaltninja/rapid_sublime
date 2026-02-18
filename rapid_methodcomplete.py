@@ -69,37 +69,44 @@ class RapidCollector():
 				findFunctions = []
 
 				with open(file_name, 'r', encoding="ascii", errors="surrogateescape") as f:
+					prevFunction = None
+
 					for line in f:
 						matches = self.cppFuncPattern.match(line)
-						if matches != None:
-							line = line.strip()
-							name = None
-							signature = None
 
-							# match global functions, e.g. "/// foobar(x, y)"
-							matches = re.match('///\s*(\w+)[\({](.*)[\)}]', line)
+						if matches == None:
+							prevFunction = None
+							continue
+
+						line = line.strip()
+						name = None
+						args = None
+
+						# match global functions, e.g. "/// @function foobar(x, y)"
+						matches = re.match('///\s*@function\s*(\w+)[\({](.*)[\)}]', line)
+						if matches != None:
+							name = matches.group(1)
+							args = matches.group(2)
+						else:
+							# match functions in modules, e.g. "/// @function Foo.bar(x, y)"
+							matches = re.match('///\s*@function\s*\w+[:\.](\w+)[\({](.*)[\)}]', line)
 							if matches != None:
 								name = matches.group(1)
-								signature = matches.group(2)
-							else:
-								# match functions in modules, e.g. "/// Foo.bar(x, y)"
-								matches = re.match('///\s*\w+[:\.](\w+)[\({](.*)[\)}]', line)
-								if matches != None:
-									name = matches.group(1)
-									signature = matches.group(2)
-								elif len(findFunctions) > 0:
-									# match description, e.g. "/// blabla"
-									matches = re.match('///\s*(.*)', line)
-									if matches:
-										description = matches.group(1)
-										#print("DESC: " + description)
-										findFunctions[-1].addDescription(description)
+								args = matches.group(2)
+							elif prevFunction != None:
+								# match description, e.g. "/// blabla" and add it to previous function
+								matches = re.match('///\s*(.*)', line)
+								if matches:
+									description = matches.group(1)
+									prevFunction.addDescription(description)
 
-							if name:
-								if signature == None:
-									signature = ""
-								functions.append(Method(name, signature, file_name))
-								findFunctions.append(FunctionDefinition(line))
+						if name:
+							if args == None:
+								args = ""
+							functions.append(Method(name, args, file_name))
+							lineForFind = line.replace("@function ", "")
+							findFunctions.append(FunctionDefinition(lineForFind))
+							prevFunction = findFunctions[-1]
 
 				RapidFunctionStorage.addAutoCompleteFunctions(functions, file_name)
 				RapidFunctionStorage.addFindFunctions(findFunctions, file_name)
