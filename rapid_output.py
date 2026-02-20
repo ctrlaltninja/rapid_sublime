@@ -7,7 +7,7 @@ from .rapid_utils import open_file_location
 tailing = True
 
 def parse_file_location(line):
-	file_name_and_row = None
+	file_name_and_location = None
 
 	# leave out lambdas: match with and without surrounding <>,
 	# but do not capture if surrounded with <>:
@@ -17,17 +17,24 @@ def parse_file_location(line):
 	groups = [g for g in groups if g != '']
 
 	if len(groups) > 0:
-		file_name_and_row = groups[-1]
+		file_name_and_location = groups[-1]
 
-	if file_name_and_row and file_name_and_row != '':
-		#split on the last occurence of ':'
-		test = file_name_and_row.rsplit(':', 1)
-		file_name = test[0].strip()
-		file_row = int(test[1])
+	if file_name_and_location and file_name_and_location != '':
+		# Split to filename, row and column (optional)
+		# Examples: "test.lua:5" -> filename + row, "test.lua:5:10" -> filename + row + column
+		parts = file_name_and_location.split(':')
 
-		return file_name, file_row
-	else:
-		return None, None
+		if len(parts) == 2:
+			filename = parts[0].strip()
+			row = int(parts[1])
+			return filename, row, 1
+		elif len(parts) == 3:
+			filename = parts[0].strip()
+			row = int(parts[1])
+			column = int(parts[2])
+			return filename, row, column
+
+	return None, None
 
 def scroll_to_tail(view):
 	region = view.full_line(view.size())
@@ -121,9 +128,9 @@ class RapidDoubleClick(sublime_plugin.WindowCommand):
 			line = view.substr(view.line(view.sel()[0]))
 			line = line.replace('\\', '/')
 
-			file_name, file_row = parse_file_location(line)
+			file_name, file_row, file_column = parse_file_location(line)
 			if file_name:
-				success, err = open_file_location(file_name, file_row)
+				success, err = open_file_location(file_name, file_row, file_column)
 				view.run_command("expand_selection", {"to": "line"})
 				if not success:
 					RapidOutputView.printMessage(err)

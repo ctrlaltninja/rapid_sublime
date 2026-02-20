@@ -10,7 +10,7 @@ CURRENT_REGION_KEY = "current"
 CURRENT_REGION_ICON = "Packages/rapid_sublime/icons/current_line.png"
 
 
-def open_file_location(file_name, row):
+def open_file_location(file_name, row, column=1):
 	window_found = sublime.active_window()
 	path = None
 	
@@ -59,7 +59,7 @@ def open_file_location(file_name, row):
 			window_found.focus_view(view)
 		else:
 			window_found.focus_group(0)
-		view = window_found.open_file(path + ":" + str(row), sublime.ENCODED_POSITION)
+		view = window_found.open_file(path + ":" + str(row) + ":" + str(column), sublime.ENCODED_POSITION)
 		return True, None
 	else:
 		return False, "%(file)s not found in project folders." % { 'file': file_name }
