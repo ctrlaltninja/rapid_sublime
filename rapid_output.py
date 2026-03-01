@@ -34,7 +34,7 @@ def parse_file_location(line):
 			column = int(parts[2])
 			return filename, row, column
 
-	return None, None
+	return None, None, None
 
 def scroll_to_tail(view):
 	region = view.full_line(view.size())
