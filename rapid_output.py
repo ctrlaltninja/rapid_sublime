@@ -7,33 +7,19 @@ from .rapid_utils import open_file_location
 tailing = True
 
 def parse_file_location(line):
-	file_name_and_location = None
-
-	# leave out lambdas: match with and without surrounding <>,
-	# but do not capture if surrounded with <>:
-	groups = re.findall(r"([-/\w\d:\.]+:\d+)|(?:<.+>)", line)
-
-	# filter out all empty strings the latter match may produce
-	groups = [g for g in groups if g != '']
-
-	if len(groups) > 0:
-		file_name_and_location = groups[-1]
-
-	if file_name_and_location and file_name_and_location != '':
-		# Split to filename, row and column (optional)
-		# Examples: "test.lua:5" -> filename + row, "test.lua:5:10" -> filename + row + column
-		parts = file_name_and_location.split(':')
-
-		if len(parts) == 2:
-			filename = parts[0].strip()
-			row = int(parts[1])
-			return filename, row, 1
-		elif len(parts) == 3:
-			filename = parts[0].strip()
-			row = int(parts[1])
-			column = int(parts[2])
+	try:
+		# Match file path at the start of the string, followed by :line and optional :column
+		# Optional drive letter (e.g. w:), then path characters, then :line[:column]
+		m = re.match(r'([A-Za-z]:)?([-/\\\w. ]+):(\d+)(?::(\d+))?', line)
+		if m:
+			drive = m.group(1) or ''
+			path = m.group(2)
+			filename = (drive + path).strip()
+			row = int(m.group(3))
+			column = int(m.group(4)) if m.group(4) else 1
 			return filename, row, column
-
+	except Exception:
+		pass
 	return None, None, None
 
 def scroll_to_tail(view):
